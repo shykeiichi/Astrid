@@ -1,1 +1,2 @@
-print(message: "Hello World", test: "asd");
+val: string = "Hello World";
+print(message: val);

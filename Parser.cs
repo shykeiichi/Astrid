@@ -22,6 +22,20 @@ public class FunctionCall : AST
     }
 }
 
+public class VariableDefine : AST
+{
+    public string label;
+    public string type;
+    public object value;
+
+    public VariableDefine(string label, string type, object value)
+    {
+        this.label = label;
+        this.type = type;
+        this.value = value;
+    }
+}
+
 public static class Parser
 {
     public static List<AST> ParseTokens(List<Token> tokens)
@@ -54,7 +68,44 @@ public static class Parser
                         tokens = tokens.Skip(1).ToList();
                         continue;
                     }
+                } else if(token.GetType() == typeof(TokenColon))
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    token = tokens[0];
+
+                    TokenIdentifier type;
+
+                    if(token.GetType() == typeof(TokenIdentifier))
+                    {
+                        type = (TokenIdentifier)token;
+                        tokens = tokens.Skip(1).ToList();
+                        token = tokens[0];
+                    } else {
+                        throw new InvalidTokenTypeException($"Expected 'TokenIdentifier' got {Tokenizer.GetTokenAsHuman(token)}", token);
+                    }
+
+                    if(token.GetType() != typeof(TokenAssign))
+                    {
+                        throw new InvalidTokenTypeException($"Expected 'TokenAssign' got {Tokenizer.GetTokenAsHuman(token)}", token);
+                    }
+
+                    tokens = tokens.Skip(1).ToList();
+                    token = tokens[0];
+
+                    var value = token;
+
+                    VariableDefine vd = new(identifierLabel, type.value, value);
+                    ast.Add(vd);
+
+                    tokens = tokens.Skip(1).ToList();
+                    token = tokens[0];
                 }
+            }
+
+            if(token.GetType() == typeof(TokenEOL))
+            {
+                tokens = tokens.Skip(1).ToList();
+                continue;
             }
             Console.WriteLine(Tokenizer.GetTokenAsHuman(token));
         }

@@ -21,6 +21,14 @@ class Program
                     Console.WriteLine(a);
                 }
             }
+            if(p.GetType() == typeof(VariableDefine))
+            {
+                VariableDefine call = (VariableDefine)p;
+                Console.WriteLine("Variable Define:");
+                Console.WriteLine("label " + call.label);
+                Console.WriteLine("type " + call.type);
+                Console.WriteLine("value " + call.value);
+            }
         }
     }
 }
