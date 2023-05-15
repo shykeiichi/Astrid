@@ -1,2 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿namespace Astrid;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Tokenizer.TokenizeFromFile("examples/Calculator.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
+    }
+}
