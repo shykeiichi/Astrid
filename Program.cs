@@ -8,8 +8,17 @@ class Program
 
         Token[] tokens = Tokenizer.TokenizeFromFile("./examples/HelloWorld.as");
 
-        List<AST> parsed = Parser.ParseTokens(tokens.ToList());
-        foreach(var p in parsed)
+        (List<AST>, Token[]) parsed = Parser.ParseTokens(tokens.ToList());
+        
+        PrintAST(parsed.Item1);
+
+        Console.WriteLine("Run: =======================");
+        Interpreter.Run(parsed.Item1);
+    }
+    
+    static void PrintAST(List<AST> ast)
+    {
+        foreach(var p in ast)
         {
             if(p.GetType() == typeof(FunctionCall))
             {
@@ -28,6 +37,13 @@ class Program
                 Console.WriteLine("label " + call.label);
                 Console.WriteLine("type " + call.type);
                 Console.WriteLine("value " + call.value);
+            }
+            if(p.GetType() == typeof(Conditional))
+            {
+                Conditional call = (Conditional)p;
+                Console.WriteLine("Conditional:");
+                Console.WriteLine("cond: " + call.conditional);
+                PrintAST(call.block);
             }
         }
     }

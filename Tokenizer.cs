@@ -36,7 +36,7 @@ public static class Tokenizer {
                         } else {
                             if(Keywords.Contains(currentWord))
                             {
-                                
+                                tokens.Add(new TokenKeyword(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
                             } else {
                                 tokens.Add(new TokenIdentifier(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
                             }

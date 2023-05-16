@@ -30,6 +30,26 @@ internal class TokenIdentifier : Token
     }
 }
 
+internal class TokenKeyword : Token
+{
+    public new string value;
+
+    public new int lineStart;
+    public new int lineEnd;
+    public new int charStart;
+    public new int charEnd;
+
+    public TokenKeyword(string value, int lineStart, int lineEnd, int charStart, int charEnd)
+    {
+        this.value = value;
+
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+        this.charStart = charStart;
+        this.charEnd = charEnd;
+    }
+}
+
 internal class TokenString : Token
 {
     public new string value;

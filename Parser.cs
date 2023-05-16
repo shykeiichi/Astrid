@@ -36,9 +36,21 @@ public class VariableDefine : AST
     }
 }
 
+public class Conditional : AST
+{
+    public bool conditional = false;
+    public List<AST> block = new();
+
+    public Conditional(bool conditional, List<AST> block)
+    {
+        this.conditional = conditional;
+        this.block = block;
+    }
+}
+
 public static class Parser
 {
-    public static List<AST> ParseTokens(List<Token> tokens)
+    public static (List<AST>, Token[]) ParseTokens(List<Token> tokens)
     {
         List<AST> ast = new();
 
@@ -100,6 +112,48 @@ public static class Parser
                     tokens = tokens.Skip(1).ToList();
                     token = tokens[0];
                 }
+            } else if(token.GetType() == typeof(TokenKeyword))
+            {
+                switch(((TokenKeyword)token).value)
+                {
+                    case "if":
+                        tokens = tokens.Skip(1).ToList();
+                        token = tokens[0];
+
+                        bool conditional = false;
+                        if(token.GetType() == typeof(TokenBoolean))
+                        {
+                            conditional = ((TokenBoolean)token).value;
+                        } else {
+                            throw new InvalidTokenTypeException($"Expected bool found '{Tokenizer.GetTokenAsHuman(token)}'", token);
+                        }
+
+                        tokens = tokens.Skip(1).ToList();
+                        token = tokens[0];
+
+                        if(token.GetType() == typeof(TokenBlockStart))
+                        {
+                            tokens = tokens.Skip(1).ToList();
+                            token = tokens[0];
+                        } else {
+                            throw new InvalidTokenTypeException($"Expected block start {'{'} found '{Tokenizer.GetTokenAsHuman(token)}'", token);
+                        }
+
+                        var (newast, newtokens) = ParseTokens(tokens);
+                        tokens = newtokens.ToList();
+                        token = tokens[0];
+
+                        ast.Add(new Conditional(conditional, newast));
+
+                        break;
+
+                }
+            } else if(token.GetType() == typeof(TokenBlockEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+
+                return (ast, tokens.ToArray());
             }
 
             if(token.GetType() == typeof(TokenEOL))
@@ -110,7 +164,7 @@ public static class Parser
             Console.WriteLine(Tokenizer.GetTokenAsHuman(token));
         }
 
-        return ast;
+        return (ast, tokens.ToArray());
     }
 
     public static (Dictionary<string, object>, Token[]) ParseFunctionParameters(Token[] _tokens)
