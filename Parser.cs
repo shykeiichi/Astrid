@@ -10,25 +10,13 @@ namespace Astrid;
 
 public class AST { }
 
-public class FunctionCall : AST
-{
-    public string function;
-    public Dictionary<string, object> arguments;
-
-    public FunctionCall(string function, Dictionary<string, object> arguments)
-    {
-        this.function = function;
-        this.arguments = arguments;
-    }
-}
-
-public class VariableDefine : AST
+public class ASTVariableDefine : AST
 {
     public string label;
     public string type;
-    public object value;
+    public List<AST> value;
 
-    public VariableDefine(string label, string type, object value)
+    public ASTVariableDefine(string label, string type, List<AST> value)
     {
         this.label = label;
         this.type = type;
@@ -36,204 +24,143 @@ public class VariableDefine : AST
     }
 }
 
-public class Conditional : AST
+public class ASTExprBinary : AST
 {
-    public bool conditional = false;
-    public List<AST> block = new();
+    public Token left;
+    public Token op;
+    public Token right;
 
-    public Conditional(bool conditional, List<AST> block)
+    public ASTExprBinary(Token left, Token op, Token right)
     {
-        this.conditional = conditional;
-        this.block = block;
+        this.left = left;
+        this.op = op;
+        this.right = right;
     }
 }
 
 public static class Parser
 {
-    public static (List<AST>, Token[]) ParseTokens(List<Token> tokens)
+    public static List<AST> ParseBlock(Token[] tokens_)
     {
+        List<Token> tokens = tokens_.ToList();
         List<AST> ast = new();
 
-        while(tokens.Count > 0)
+        while(tokens.Count > 0) 
         {
             var token = tokens[0];
-            if (token.GetType() == typeof(TokenIdentifier))
-            {
-                var identifierLabel = ((TokenIdentifier)token).value;
-                tokens = tokens.Skip(1).ToList();
-                token = tokens[0];
-
-                if(token.GetType() == typeof(TokenParenStart))
-                {
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-                    var parameters = ParseFunctionParameters(tokens.ToArray());
-                    FunctionCall fc = new(identifierLabel, parameters.Item1);
-                    ast.Add(fc);
-                    tokens = parameters.Item2.ToList();
-
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
-                    if(token.GetType() == typeof(TokenEOL))
-                    {
-                        tokens = tokens.Skip(1).ToList();
-                        continue;
-                    }
-                } else if(token.GetType() == typeof(TokenColon))
-                {
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
-                    TokenIdentifier type;
-
-                    if(token.GetType() == typeof(TokenIdentifier))
-                    {
-                        type = (TokenIdentifier)token;
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-                    } else {
-                        throw new InvalidTokenTypeException($"Expected 'TokenIdentifier' got {Tokenizer.GetTokenAsHuman(token)}", token);
-                    }
-
-                    if(token.GetType() != typeof(TokenAssign))
-                    {
-                        throw new InvalidTokenTypeException($"Expected 'TokenAssign' got {Tokenizer.GetTokenAsHuman(token)}", token);
-                    }
-
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
-                    var value = token;
-
-                    VariableDefine vd = new(identifierLabel, type.value, value);
-                    ast.Add(vd);
-
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-                }
-            } else if(token.GetType() == typeof(TokenKeyword))
-            {
-                switch(((TokenKeyword)token).value)
-                {
-                    case "if":
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-
-                        bool conditional = false;
-                        if(token.GetType() == typeof(TokenBoolean))
-                        {
-                            conditional = ((TokenBoolean)token).value;
-                        } else {
-                            throw new InvalidTokenTypeException($"Expected bool found '{Tokenizer.GetTokenAsHuman(token)}'", token);
-                        }
-
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-
-                        if(token.GetType() == typeof(TokenBlockStart))
-                        {
-                            tokens = tokens.Skip(1).ToList();
-                            token = tokens[0];
-                        } else {
-                            throw new InvalidTokenTypeException($"Expected block start {'{'} found '{Tokenizer.GetTokenAsHuman(token)}'", token);
-                        }
-
-                        var (newast, newtokens) = ParseTokens(tokens);
-                        tokens = newtokens.ToList();
-                        token = tokens[0];
-
-                        ast.Add(new Conditional(conditional, newast));
-
-                        break;
-
-                }
-            } else if(token.GetType() == typeof(TokenBlockEnd))
-            {
-                tokens = tokens.Skip(1).ToList();
-                token = tokens[0];
-
-                return (ast, tokens.ToArray());
-            }
-
-            if(token.GetType() == typeof(TokenEOL))
-            {
-                tokens = tokens.Skip(1).ToList();
-                continue;
-            }
             Console.WriteLine(Tokenizer.GetTokenAsHuman(token));
-        }
-
-        return (ast, tokens.ToArray());
-    }
-
-    public static (Dictionary<string, object>, Token[]) ParseFunctionParameters(Token[] _tokens)
-    {
-        Dictionary<string, object> parameters = new();
-        bool run = true;
-
-        List<Token> tokens = _tokens.ToList();
-
-        while (tokens.Count > 0 || !run)
-        {
-            var token = tokens[0];
-
-            if(token.GetType() == typeof(TokenComma))
+            
+            if(token.GetType() == typeof(TokenIdentifier))
             {
+                var identifierLabel = tokens[0].value;
+                
                 tokens = tokens.Skip(1).ToList();
                 token = tokens[0];
+
+                if(token.GetType() == typeof(TokenColon))
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    token = tokens[0];
+
+                    var (newtokens, newast) = ParseVariable(tokens.ToArray(), identifierLabel);
+
+                    tokens = newtokens.ToList();
+                    ast.AddRange(newast);
+                } else {
+                    throw new Exception("Expected Colon");
+                }
             }
-
-            TokenIdentifier parameterLabel;
-            if (token.GetType() == typeof(TokenIdentifier))
-            {
-                parameterLabel = (TokenIdentifier)token;
-            }
-            else if (token.GetType() == typeof(TokenParenEnd))
-            {
-                run = false;
-
-                return (parameters, tokens.ToArray());
-            }
-            else
-            {
-                throw new InvalidTokenTypeException($"Expected 'TokenIdentifier' got '{Tokenizer.GetTokenAsHuman(token)}", token);
-            }
-
-            tokens = tokens.Skip(1).ToList();
-            token = tokens[0];
-
-            if (token.GetType() != typeof(TokenColon))
-                throw new InvalidTokenTypeException($"Expected 'TokenComma' got '{Tokenizer.GetTokenAsHuman(token)}", token);
-
-            tokens = tokens.Skip(1).ToList();
-            token = tokens[0];
-
-            Token parameterValue;
-            if (token.GetType() == typeof(TokenIdentifier) || token.GetType() == typeof(TokenString))
-            {
-                parameterValue = token;
-            }
-            else
-            {
-                throw new InvalidTokenTypeException($"Expected 'TokenIdentifier' or 'TokenString' got '{Tokenizer.GetTokenAsHuman(token)}", token);
-            }
-
-            if (parameterValue.GetType() == typeof(TokenIdentifier))
-                parameters.Add(((TokenIdentifier)parameterLabel).value, ((TokenIdentifier)parameterValue).value);
-            else if (parameterValue.GetType() == typeof(TokenString))
-                parameters.Add(((TokenIdentifier)parameterLabel).value, ((TokenString)parameterValue).value);
-
-            tokens = tokens.Skip(1).ToList();
-            token = tokens[0];
         }
-
-        return (parameters, tokens.ToArray());
+        
+        return ast;
     }
 
-    public static void ParseEquation(Token[] tokens)
+    public static (Token[], List<AST>) ParseVariable(Token[] tokens_, string label)
     {
+        List<Token> tokens = tokens_.ToList();
+        List<AST> ast = new();
+
+        var token = tokens[0];
+
+        string variableType = "";
+        if(token.GetType() == typeof(TokenIdentifier))
+        {
+            variableType = token.value;
+        } else {
+            throw new Exception("Expected type found " + token.ToString());
+        }
+
+        tokens = tokens.Skip(1).ToList();
+        token = tokens[0];
+
+        if(token.GetType() == typeof(TokenAssign))
+        {
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+        } else {
+            throw new Exception("Expected assign found " + token.ToString());
+        }
+
+        // var (newtokens, newast) = ParseExpression(tokens.ToArray());
+
+        // // tokens = newtokens.ToList();
         
+        // // ast.Add(new ASTVariableDefine(label, variableType, newast));
+
+        return (tokens.ToArray(), ast);
+    }
+
+    public class Expr {}
+    public class ExprValue : Expr {
+        public Token value;
+
+        public ExprValue(Token value)
+        {
+            this.value = value;
+        }
+    }
+    public class ExprBinary : Expr {
+        public Expr left;
+        public Token op;
+        public Expr right;
+
+        public ExprBinary(Expr left, Token op, Expr right)
+        {
+            this.left = left;
+            this.op = op;
+            this.right = right;
+        }
+    }
+
+    public static List<Token> ParseExpression(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+        List<AST> ast = new();
+
+        Dictionary<Type, (int, bool)> Operators = new()
+        {
+            {typeof(TokenEquals), (0, false)},
+            {typeof(TokenNotEquals), (0, false)},
+            {typeof(TokenGreater), (1, false)},
+            {typeof(TokenGreaterEquals), (1, false)},
+            {typeof(TokenLesser), (1, false)},
+            {typeof(TokenLesserEquals), (1, false)},
+            {typeof(TokenPlus), (2, false)},
+            {typeof(TokenMinus), (2, false)},
+            {typeof(TokenDivide), (3, false)},
+            {typeof(TokenMultiply), (3, false)},
+            {typeof(TokenPower), (4, true)},
+            {typeof(TokenNot), (4, false)},
+        };
+
+        Type[] Values = new [] {typeof(TokenInt), typeof(TokenFloat)};
+
+        while(tokens.Count != 1)
+        {
+            
+        }
+
+        return OutputQueue;
     }
 }
 

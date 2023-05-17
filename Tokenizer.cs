@@ -27,12 +27,15 @@ public static class Tokenizer {
                 if(isString) {
                     tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
                 } else {
-                    float value;
-                    if(float.TryParse(currentWord, out value)) {
-                        tokens.Add(new TokenNumber(value, lineIdx, lineIdx, charIdx - value.ToString().Length, charIdx));
-                    } else {
+                    int ivalue;
+                    float fvalue;
+                    if(int.TryParse(currentWord, out ivalue))
+                        tokens.Add(new TokenInt(ivalue.ToString(), lineIdx, lineIdx, charIdx - ivalue.ToString().Length, charIdx));
+                    else if(float.TryParse(currentWord, out fvalue))
+                        tokens.Add(new TokenFloat(fvalue.ToString(), lineIdx, lineIdx, charIdx - fvalue.ToString().Length, charIdx));
+                    else {
                         if(boolValues.Contains(currentWord.ToLower())) {
-                            tokens.Add(new TokenBoolean(currentWord.ToLower() == "true", lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
+                            tokens.Add(new TokenBoolean((currentWord.ToLower() == "true").ToString().ToLower(), lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
                         } else {
                             if(Keywords.Contains(currentWord))
                             {
@@ -74,7 +77,12 @@ public static class Tokenizer {
                     case '=': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenAssign(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        if(line[charIdx + 1] != '=')
+                            tokens.Add(new TokenAssign(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        else {
+                            tokens.Add(new TokenEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            skipNext = true;
+                        }
                     } break;
                     case '"': {
                         isString = true;
@@ -143,17 +151,17 @@ public static class Tokenizer {
                     case '*': {
                         HandleCurrentWord();
 
-                        if(line[charIdx + 1] != '*')
-                            tokens.Add(new TokenMultiply(lineIdx, lineIdx, charIdx - 1, charIdx));
-                        else {
-                            tokens.Add(new TokenPower(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
-                            skipNext = true;
-                        }
+                        tokens.Add(new TokenMultiply(lineIdx, lineIdx, charIdx - 1, charIdx));
                     } break;
                     case '/': {
                         HandleCurrentWord();
 
                         tokens.Add(new TokenDivide(lineIdx, lineIdx, charIdx - 1, charIdx));
+                    } break;
+                    case '^': {
+                        HandleCurrentWord();
+
+                        tokens.Add(new TokenPower(lineIdx, lineIdx, charIdx - 1, charIdx));
                     } break;
                     case '.': {
                         HandleCurrentWord();
@@ -183,7 +191,32 @@ public static class Tokenizer {
                     case '!': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenNot(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        if(line[charIdx + 1] != '=')
+                            tokens.Add(new TokenNot(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        else {
+                            tokens.Add(new TokenNotEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            skipNext = true;
+                        }
+                    } break;
+                    case '>': {
+                        HandleCurrentWord();
+
+                        if(line[charIdx + 1] != '=')
+                            tokens.Add(new TokenGreater(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        else {
+                            tokens.Add(new TokenGreaterEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            skipNext = true;
+                        }
+                    } break;
+                    case '<': {
+                        HandleCurrentWord();
+
+                        if(line[charIdx + 1] != '=')
+                            tokens.Add(new TokenLesser(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        else {
+                            tokens.Add(new TokenLesserEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            skipNext = true;
+                        }
                     } break;
                     default: {
                         if(c != ' ') {

@@ -1,8 +1,9 @@
 val: string = "Hello World";
+val2: string = val + "2";
 print(message: val);
-if true {
+if val == "Hello World" {
     print(message: "Test");
-    if false {
+    if val2 == "Hello World2" {
         print(message: "wasdois");
     }
 }

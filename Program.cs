@@ -4,46 +4,33 @@ class Program
 {
     static void Main(string[] args)
     {
-        Tokenizer.TokenizeFromFile("./examples/HelloWorld.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
+        // Tokenizer.TokenizeFromFile("./examples/Expression.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
 
-        Token[] tokens = Tokenizer.TokenizeFromFile("./examples/HelloWorld.as");
+        Token[] tokens = Tokenizer.TokenizeFromFile("./examples/Expression.as");
 
-        (List<AST>, Token[]) parsed = Parser.ParseTokens(tokens.ToList());
+        Parser.ParseExpression(tokens).ForEach(e => Console.WriteLine(Tokenizer.GetTokenAsHuman(e)));        
+
+        // var parsed = Parser.ParseBlock(tokens);
+
+        // PrintAST(parsed);
+
+        // Console.WriteLine("Run: =======================");
         
-        PrintAST(parsed.Item1);
-
-        Console.WriteLine("Run: =======================");
-        Interpreter.Run(parsed.Item1);
     }
-    
-    static void PrintAST(List<AST> ast)
+
+    static void PrintAST(List<AST> a)
     {
-        foreach(var p in ast)
+        foreach(var d in a)
         {
-            if(p.GetType() == typeof(FunctionCall))
+            if(d.GetType() == typeof(ASTVariableDefine))
             {
-                FunctionCall call = (FunctionCall)p;
-                Console.WriteLine("Function Call:");
-                Console.WriteLine(call.function);
-                foreach(var a in call.arguments)
-                {
-                    Console.WriteLine(a);
-                }
-            }
-            if(p.GetType() == typeof(VariableDefine))
-            {
-                VariableDefine call = (VariableDefine)p;
                 Console.WriteLine("Variable Define:");
-                Console.WriteLine("label " + call.label);
-                Console.WriteLine("type " + call.type);
-                Console.WriteLine("value " + call.value);
-            }
-            if(p.GetType() == typeof(Conditional))
+                Console.WriteLine(" Label: " + ((ASTVariableDefine)d).label);
+                Console.WriteLine(" Type : " + ((ASTVariableDefine)d).type);
+                Console.WriteLine(" Value: " + ((ASTVariableDefine)d).value);
+            } else if(d.GetType() == typeof(ASTExpression))
             {
-                Conditional call = (Conditional)p;
-                Console.WriteLine("Conditional:");
-                Console.WriteLine("cond: " + call.conditional);
-                PrintAST(call.block);
+
             }
         }
     }

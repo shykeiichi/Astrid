@@ -2,16 +2,6 @@ namespace Astrid;
 
 public class Token
 {
-    public string value = "";
-
-    public int lineStart;
-    public int lineEnd;
-    public int charStart;
-    public int charEnd;  
-}
-
-internal class TokenIdentifier : Token
-{
     public new string value;
 
     public new int lineStart;
@@ -19,454 +9,268 @@ internal class TokenIdentifier : Token
     public new int charStart;
     public new int charEnd;
 
-    public TokenIdentifier(string value, int lineStart, int lineEnd, int charStart, int charEnd)
+    public Token(string value, int lineStart, int lineEnd, int charStart, int charEnd)
     {
         this.value = value;
-
+        
         this.lineStart = lineStart;
         this.lineEnd = lineEnd;
         this.charStart = charStart;
         this.charEnd = charEnd;
+    }
+
+    public Token(int lineStart, int lineEnd, int charStart, int charEnd)
+    {
+    }
+}
+
+internal class TokenIdentifier : Token
+{
+    public TokenIdentifier(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
     }
 }
 
 internal class TokenKeyword : Token
 {
-    public new string value;
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenKeyword(string value, int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenKeyword(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
     {
-        this.value = value;
-
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
     }
 }
 
 internal class TokenString : Token
 {
-    public new string value;
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenString(string value, int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenString(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
     {
-        this.value = value;
-        
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
     }
 }
 
-internal class TokenNumber : Token
+internal class TokenFloat : Token
 {
-    public new float value;
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenNumber(float value, int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenFloat(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
     {
-        this.value = value;
-        
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+    }
+}
+
+internal class TokenInt : Token
+{
+    public TokenInt(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
     }
 }
 
 internal class TokenBoolean : Token
 {
-    public new bool value;
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenBoolean(bool value, int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenBoolean(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
     {
-        this.value = value;
-        
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
     }
 }
 
 internal class TokenAssign : Token
 {
-    public new string value = "=";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenAssign(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenAssign(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "=";
     }
 }
 
 internal class TokenComma : Token
 {
-    public new string value = ",";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenComma(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenComma(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = ",";
     }
 }
 
 internal class TokenArrayStart : Token
 {
-    public new string value = "[";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenArrayStart(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenArrayStart(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "[";
     }
 }
 
 internal class TokenArrayEnd : Token
 {
-    public new string value = "]";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenArrayEnd(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenArrayEnd(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "]";
     }
 }
 
 internal class TokenParenStart : Token
 {
-    public new string value = "(";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenParenStart(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenParenStart(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "(";
     }
 }
 
 internal class TokenParenEnd : Token
 {
-    public new string value = ")";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenParenEnd(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenParenEnd(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = ")";
     }
 }
 
 internal class TokenColon : Token
 {
-    public new string value = ":";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenColon(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenColon(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = ":";
     }
 }
 
 internal class TokenDoubleColon : Token
 {
-    public new string value = "::";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenDoubleColon(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenDoubleColon(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "::";
     }
 }
 
 internal class TokenBlockStart : Token
 {
-    public new string value = "{";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenBlockStart(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenBlockStart(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "{";
     }
 }
 
 internal class TokenBlockEnd : Token
 {
-    public new string value = "}";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenBlockEnd(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenBlockEnd(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "}";
     }
 }
 
 internal class TokenEOL : Token
 {
-    public new string value = ";";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenEOL(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenEOL(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = ";";
     }
 }
 
 internal class TokenNamespaceSeparator : Token
 {
-    public new string value = ".";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenNamespaceSeparator(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenNamespaceSeparator(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = ".";
     }
 }
 
 internal class TokenPlus : Token
 {
-    public new string value = "+";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenPlus(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenPlus(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "+";
     }
 }
 
 internal class TokenMinus : Token
 {
-    public new string value = "-";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenMinus(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenMinus(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "-";
     }
 }
 
 internal class TokenMultiply : Token
 {
-    public new string value = "*";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenMultiply(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenMultiply(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "*";
     }
 }
 
 internal class TokenDivide : Token
 {
-    public new string value = "/";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenDivide(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenDivide(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "/";
     }
 }
 
 internal class TokenPower : Token
 {
-    public new string value = "**";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenPower(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenPower(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "^";
     }
 }
 
 internal class TokenOr : Token
 {
-    public new string value = "||";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenOr(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenOr(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "||";
     }
 }
 
 internal class TokenAnd : Token
 {
-    public new string value = "&&";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenAnd(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenAnd(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "&&";
     }
 }
 
 internal class TokenNot : Token
 {
-    public new string value = "!";
-
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
-
-    public TokenNot(int lineStart, int lineEnd, int charStart, int charEnd)
+    public TokenNot(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
-        this.lineStart = lineStart;
-        this.lineEnd = lineEnd;
-        this.charStart = charStart;
-        this.charEnd = charEnd;
+        this.value = "!";
+    }
+}
+
+internal class TokenEquals : Token
+{
+    public TokenEquals(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "==";
+    }
+}
+
+internal class TokenNotEquals : Token
+{
+    public TokenNotEquals(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "!=";
+    }
+}
+
+internal class TokenGreater : Token
+{
+    public TokenGreater(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = ">";
+    }
+}
+
+internal class TokenGreaterEquals : Token
+{
+    public TokenGreaterEquals(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = ">=";
+    }
+}
+
+internal class TokenLesser : Token
+{
+    public TokenLesser(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "<";
+    }
+}
+
+internal class TokenLesserEquals : Token
+{
+    public TokenLesserEquals(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "<=";
     }
 }
 
