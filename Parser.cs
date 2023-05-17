@@ -24,13 +24,20 @@ public class ASTVariableDefine : AST
     }
 }
 
-public class ASTExprBinary : AST
-{
-    public Token left;
-    public Token op;
-    public Token right;
+public class ASTExprValue : AST {
+    public Token value;
 
-    public ASTExprBinary(Token left, Token op, Token right)
+    public ASTExprValue(Token value)
+    {
+        this.value = value;
+    }
+}
+public class ASTExprBinary : AST {
+    public AST left;
+    public Token op;
+    public AST right;
+
+    public ASTExprBinary(AST left, Token op, AST right)
     {
         this.left = left;
         this.op = op;
@@ -110,28 +117,6 @@ public static class Parser
         return (tokens.ToArray(), ast);
     }
 
-    public class Expr {}
-    public class ExprValue : Expr {
-        public Token value;
-
-        public ExprValue(Token value)
-        {
-            this.value = value;
-        }
-    }
-    public class ExprBinary : Expr {
-        public Expr left;
-        public Token op;
-        public Expr right;
-
-        public ExprBinary(Expr left, Token op, Expr right)
-        {
-            this.left = left;
-            this.op = op;
-            this.right = right;
-        }
-    }
-
     public static List<Token> ParseExpression(Token[] tokens_)
     {
         List<Token> tokens = tokens_.ToList();
@@ -139,26 +124,88 @@ public static class Parser
 
         Dictionary<Type, (int, bool)> Operators = new()
         {
-            {typeof(TokenEquals), (0, false)},
-            {typeof(TokenNotEquals), (0, false)},
-            {typeof(TokenGreater), (1, false)},
-            {typeof(TokenGreaterEquals), (1, false)},
-            {typeof(TokenLesser), (1, false)},
-            {typeof(TokenLesserEquals), (1, false)},
-            {typeof(TokenPlus), (2, false)},
-            {typeof(TokenMinus), (2, false)},
-            {typeof(TokenDivide), (3, false)},
-            {typeof(TokenMultiply), (3, false)},
-            {typeof(TokenPower), (4, true)},
-            {typeof(TokenNot), (4, false)},
+            {typeof(TokenPlus), (0, false)},
+            {typeof(TokenMinus), (0, false)},
+            {typeof(TokenDivide), (1, false)},
+            {typeof(TokenMultiply), (1, false)},
+            {typeof(TokenPower), (2, true)},
         };
 
         Type[] Values = new [] {typeof(TokenInt), typeof(TokenFloat)};
 
+        List<Token> OperatorQueue = new();
+        List<Token> OutputQueue = new();
+
         while(tokens.Count != 1)
         {
-            
+            var token = tokens[0];
+            tokens = tokens.Skip(1).ToList();
+
+            if(Values.Contains(token.GetType()))
+            {
+                Console.WriteLine("Number " + Tokenizer.GetTokenAsHuman(token));
+                OutputQueue.Add(token);
+            } else if(Operators.Keys.Contains(token.GetType()))
+            {
+                Console.WriteLine("Operator " + Tokenizer.GetTokenAsHuman(token));
+
+                while(true)
+                {
+                    if(OperatorQueue.Count == 0)
+                        break;
+
+                    bool satisfied = false;
+
+                    if(!new [] {typeof(TokenParenStart), typeof(TokenParenEnd)}.Contains(OperatorQueue.Last().GetType()))
+                    {
+                        if(Operators[OperatorQueue.Last().GetType()].Item1 > Operators[token.GetType()].Item1)
+                        {
+                            satisfied = true;
+                        } else if(Operators[OperatorQueue.Last().GetType()].Item1 == Operators[token.GetType()].Item1)
+                        {
+                            if(Operators[OperatorQueue.Last().GetType()].Item2 == false)
+                                satisfied = true;
+                        }
+                    }
+
+                    satisfied = satisfied && OperatorQueue.Last().GetType() != typeof(TokenParenStart);
+
+                    if(!satisfied)
+                        break;
+
+                    OutputQueue.Add(OperatorQueue.Last());
+                    OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
+                }
+
+                OperatorQueue.Add(token);
+            } else if(token.GetType() == typeof(TokenParenStart))
+            {
+                Console.WriteLine("Left " + Tokenizer.GetTokenAsHuman(token));
+                OperatorQueue.Add(token);
+            } else if(token.GetType() == typeof(TokenParenEnd))
+            {
+                Console.WriteLine("Right " + Tokenizer.GetTokenAsHuman(token));
+
+                while(true)
+                {
+                    if(OperatorQueue.Count == 0)
+                        break;
+
+                    if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                        break;
+
+                    OutputQueue.Add(OperatorQueue.Last());
+                    OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
+                }
+
+                if(OperatorQueue.Count != 0 && OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                {
+                    OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
+                }
+            }
         }
+
+        OutputQueue.AddRange(OperatorQueue);
 
         return OutputQueue;
     }
