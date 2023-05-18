@@ -14,9 +14,9 @@ public class ASTVariableDefine : AST
 {
     public string label;
     public string type;
-    public List<AST> value;
+    public AstExpression value;
 
-    public ASTVariableDefine(string label, string type, List<AST> value)
+    public ASTVariableDefine(string label, string type, AstExpression value)
     {
         this.label = label;
         this.type = type;
@@ -24,24 +24,13 @@ public class ASTVariableDefine : AST
     }
 }
 
-public class ASTExprValue : AST {
-    public Token value;
+public class AstExpression : AST
+{
+    public List<Token> expression;
 
-    public ASTExprValue(Token value)
+    public AstExpression(List<Token> expression)
     {
-        this.value = value;
-    }
-}
-public class ASTExprBinary : AST {
-    public AST left;
-    public Token op;
-    public AST right;
-
-    public ASTExprBinary(AST left, Token op, AST right)
-    {
-        this.left = left;
-        this.op = op;
-        this.right = right;
+        this.expression = expression;
     }
 }
 
@@ -73,8 +62,12 @@ public static class Parser
 
                     tokens = newtokens.ToList();
                     ast.AddRange(newast);
-                } else {
-                    throw new Exception("Expected Colon");
+                } else if(token.GetType() == typeof(TokenParenStart)) 
+                {
+
+                } else 
+                {
+                    throw new Exception($"{token} cannot follow identifier");
                 }
             }
         }
@@ -108,106 +101,124 @@ public static class Parser
             throw new Exception("Expected assign found " + token.ToString());
         }
 
-        // var (newtokens, newast) = ParseExpression(tokens.ToArray());
+        var (newtokens, newast) = ParseExpression(tokens.ToArray());
 
-        // // tokens = newtokens.ToList();
+        tokens = newtokens.ToList();
         
-        // // ast.Add(new ASTVariableDefine(label, variableType, newast));
+        ast.Add(new ASTVariableDefine(label, variableType, newast));
 
         return (tokens.ToArray(), ast);
     }
 
-    public static List<Token> ParseExpression(Token[] tokens_)
+    public static Type[] ExprValues = new [] {typeof(TokenInt), typeof(TokenFloat), typeof(TokenString), typeof(TokenIdentifier)};
+
+    public static Dictionary<Type, (int, bool)> ExprOperatorsEquality = new()
+    {
+        {typeof(TokenEquals), (0, false)},
+        {typeof(TokenNotEquals), (0, false)},
+        {typeof(TokenGreater), (1, false)},
+        {typeof(TokenGreaterEquals), (1, false)},
+        {typeof(TokenLesser), (1, false)},
+        {typeof(TokenLesserEquals), (1, false)}   
+    };
+
+    public static Dictionary<Type, (int, bool)> ExprOperatorsAlgebraic = new()
+    {
+        {typeof(TokenPlus), (2, false)},
+        {typeof(TokenMinus), (2, false)},
+        {typeof(TokenDivide), (3, false)},
+        {typeof(TokenMultiply), (3, false)},
+        {typeof(TokenPower), (4, false)},
+    };
+
+    public static Dictionary<Type, (int, bool)> ExprOperatorsBoolean = new()
+    {
+        {typeof(TokenNot), (4, true)}
+    };
+
+    public static Dictionary<Type, (int, bool)> ExprOperators = new();
+
+    public static (Token[], AstExpression) ParseExpression(Token[] tokens_)
     {
         List<Token> tokens = tokens_.ToList();
         List<AST> ast = new();
 
-        Dictionary<Type, (int, bool)> Operators = new()
-        {
-            {typeof(TokenPlus), (0, false)},
-            {typeof(TokenMinus), (0, false)},
-            {typeof(TokenDivide), (1, false)},
-            {typeof(TokenMultiply), (1, false)},
-            {typeof(TokenPower), (2, true)},
-        };
-
-        Type[] Values = new [] {typeof(TokenInt), typeof(TokenFloat)};
-
         List<Token> OperatorQueue = new();
         List<Token> OutputQueue = new();
 
-        while(tokens.Count != 1)
+        while(tokens.Count > 0)
         {
             var token = tokens[0];
             tokens = tokens.Skip(1).ToList();
 
-            if(Values.Contains(token.GetType()))
-            {
-                Console.WriteLine("Number " + Tokenizer.GetTokenAsHuman(token));
-                OutputQueue.Add(token);
-            } else if(Operators.Keys.Contains(token.GetType()))
-            {
-                Console.WriteLine("Operator " + Tokenizer.GetTokenAsHuman(token));
+            // Console.WriteLine(Tokenizer.GetTokenAsHuman(token));
 
-                while(true)
+            if(new [] {typeof(TokenEOL), typeof(TokenBlockStart)}.Contains(token.GetType()))
+            {
+                while(OperatorQueue.Count > 0)
                 {
-                    if(OperatorQueue.Count == 0)
-                        break;
-
-                    bool satisfied = false;
-
-                    if(!new [] {typeof(TokenParenStart), typeof(TokenParenEnd)}.Contains(OperatorQueue.Last().GetType()))
-                    {
-                        if(Operators[OperatorQueue.Last().GetType()].Item1 > Operators[token.GetType()].Item1)
-                        {
-                            satisfied = true;
-                        } else if(Operators[OperatorQueue.Last().GetType()].Item1 == Operators[token.GetType()].Item1)
-                        {
-                            if(Operators[OperatorQueue.Last().GetType()].Item2 == false)
-                                satisfied = true;
-                        }
-                    }
-
-                    satisfied = satisfied && OperatorQueue.Last().GetType() != typeof(TokenParenStart);
-
-                    if(!satisfied)
-                        break;
+                    if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                        throw new Exception("Can't be left parnthesis");
 
                     OutputQueue.Add(OperatorQueue.Last());
                     OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
                 }
 
+                return (tokens.ToArray(), new AstExpression(OutputQueue));
+            }
+
+            if(ExprValues.Contains(token.GetType()))
+            {
+                OutputQueue.Add(token);
+            } else if(ExprOperators.Keys.Contains(token.GetType()))
+            {
+                while(
+                    (OperatorQueue.Count > 0 && OperatorQueue.Last().GetType() != typeof(TokenParenStart)) 
+                    && 
+                    (
+                        ExprOperators[OperatorQueue.Last().GetType()].Item1 > ExprOperators[token.GetType()].Item1 
+                        || 
+                        (ExprOperators[OperatorQueue.Last().GetType()].Item1 == ExprOperators[token.GetType()].Item1 && !ExprOperators[token.GetType()].Item2)
+                    )
+                )
+                {
+                    OutputQueue.Add(OperatorQueue.Last());
+                    OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
+                }
+                
                 OperatorQueue.Add(token);
             } else if(token.GetType() == typeof(TokenParenStart))
             {
-                Console.WriteLine("Left " + Tokenizer.GetTokenAsHuman(token));
                 OperatorQueue.Add(token);
             } else if(token.GetType() == typeof(TokenParenEnd))
             {
-                Console.WriteLine("Right " + Tokenizer.GetTokenAsHuman(token));
-
-                while(true)
-                {
+                while(
+                    OperatorQueue.Last().GetType() != typeof(TokenParenStart)
+                ) {
                     if(OperatorQueue.Count == 0)
-                        break;
-
-                    if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
-                        break;
+                        throw new Exception("Unmatched parenthesis");
 
                     OutputQueue.Add(OperatorQueue.Last());
                     OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
                 }
 
-                if(OperatorQueue.Count != 0 && OperatorQueue.Last().GetType() == typeof(TokenParenStart))
-                {
-                    OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
-                }
+                if(OperatorQueue.GetType() == typeof(TokenParenStart))
+                    throw new Exception("Expected left parenthesis");
+
+                OperatorQueue.RemoveAt(OperatorQueue.Count - 1);                
             }
         }
 
-        OutputQueue.AddRange(OperatorQueue);
+        while(OperatorQueue.Count > 0)
+        {
+            if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                throw new Exception("Can't be left parnthesis");
 
-        return OutputQueue;
+            OutputQueue.Add(OperatorQueue.Last());
+            OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
+        }
+
+        return (tokens.ToArray(), new AstExpression(OutputQueue));
     }
 }
 
