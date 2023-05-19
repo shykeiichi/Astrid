@@ -27,11 +27,11 @@ class Program
 
         var parsed = Parser.ParseBlock(tokens);
 
-        PrintAST(parsed);
+        // PrintAST(parsed.Item2);
 
-        Console.WriteLine("Run: =======================");
+        // Console.WriteLine("Run: =======================");
         
-        Interpreter.Run(parsed);
+        Interpreter.Run(parsed.Item2, new());
     }
 
     static void PrintAST(List<AST> a)
@@ -40,12 +40,27 @@ class Program
         {
             if(d.GetType() == typeof(ASTVariableDefine))
             {
+                var call = ((ASTVariableDefine)d);
                 Console.WriteLine("Variable Define:");
-                Console.WriteLine(" Label: " + ((ASTVariableDefine)d).label);
-                Console.WriteLine(" Type : " + ((ASTVariableDefine)d).type);
+                Console.WriteLine(" Label: " + call.label);
+                Console.WriteLine(" Type : " + call.type);
                 Console.Write(" Value: ");
-                ((ASTVariableDefine)d).value.expression.ForEach(e => Console.Write(e.value + " "));
+                call.value.expression.ForEach(e => Console.Write(e.value + " "));
                 Console.WriteLine();
+            } else if(d.GetType() == typeof(ASTFunctionCall))
+            {
+                var call = ((ASTFunctionCall)d);
+                Console.WriteLine("Function Call:");
+                Console.WriteLine(" Label: " + call.label);
+                Console.Write(" Parameters: ");
+                call.value.ToList().ForEach(e => Console.Write($"{e.Key}: {e.Value}, "));
+                Console.WriteLine();
+            } else if(d.GetType() == typeof(ASTConditional))
+            {
+                var call = ((ASTConditional)d);
+                Console.WriteLine("Conditional:");
+                Console.WriteLine(" Condition: " + call.condition);
+                PrintAST(call.block);
             }
         }
     }

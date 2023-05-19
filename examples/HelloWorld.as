@@ -1,10 +1,6 @@
-val: string = "Hello World";
-val2: string = val + "2";
-print(message: val);
-if val == "Hello World" {
-    print(message: "Test");
-    if val2 == "Hello World2" {
-        print(message: "wasdois");
-    }
+val: string = "Hello";
+val2: string = "World";
+if val + val2 == "HelloWorld" 
+{
+    print(message: val + " " + val2);
 }
-print(message: "asd");
