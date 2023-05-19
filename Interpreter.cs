@@ -105,6 +105,42 @@ public static class Interpreter
                 }
 
                 Variables.Add(call.label, (type, value));                
+            } else if(a.GetType() == typeof(ASTVariableReassign))
+            {
+                var call = (ASTVariableReassign)a;
+                var value = RunExpression(call.value, Variables);
+                Types type;
+
+                Console.WriteLine("reached as");
+
+                if(!Variables.Keys.Contains(call.label))
+                    throw new Exception($"Variable {call.label} doens't exist so it can't be reassigned");
+
+                switch(Variables[call.label].Item1)
+                {
+                    case Types.Int:
+                        if(value.GetType() != typeof(TokenInt))
+                            throw new Exception($"Cannot assign ${value.GetType()} to int");
+                        type = Types.Int;
+                        break;
+                    case Types.Float:
+                        if(value.GetType() != typeof(TokenFloat))
+                            throw new Exception($"Cannot assign ${value.GetType()} to float");
+                        type = Types.Float;
+                        break;
+                    case Types.String:
+                        if(value.GetType() != typeof(TokenString))
+                            throw new Exception($"Cannot assign ${value.GetType()} to string");
+                        type = Types.String;
+                        break;
+                    case Types.Any:
+                        type = Types.Any;
+                        break;
+                    default:
+                        throw new Exception($"Invalid type in reassign {Variables[call.label].Item1}");
+                }
+
+                Variables[call.label] = (type, value);                
             } else if(a.GetType() == typeof(ASTFunctionCall))
             {
                 var call = (ASTFunctionCall)a;
@@ -136,6 +172,33 @@ public static class Interpreter
 
                 if(result.value == "true")
                 {
+                    Run(call.block, Variables);
+                }
+            } else if(a.GetType() == typeof(ASTWhile))
+            {
+                var call = (ASTWhile)a;
+                
+                var result = RunExpression(call.condition, Variables);
+
+                // call.condition.expression.ForEach(e => Console.Write(Tokenizer.GetTokenAsHuman(e) + " "));
+                // Console.WriteLine();
+
+                bool run = result.value == "true";
+
+                while(run)
+                {
+                    result = RunExpression(call.condition, Variables);
+
+                    if(result.value != "true")
+                    {
+                        run = false;
+                        break;
+                    }
+
+                    if(result.GetType() != typeof(TokenBoolean))
+                        throw new Exception($"While condition needs to be of type boolean not {Tokenizer.GetTokenAsHuman(result)}");
+
+
                     Run(call.block, Variables);
                 }
             }

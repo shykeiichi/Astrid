@@ -24,6 +24,18 @@ public class ASTVariableDefine : AST
     }
 }
 
+public class ASTVariableReassign : AST
+{
+    public string label;
+    public ASTExpression value;
+
+    public ASTVariableReassign(string label, ASTExpression value)
+    {
+        this.label = label;
+        this.value = value;
+    }
+}
+
 public class ASTFunctionCall : AST
 {
     public string label;
@@ -52,6 +64,19 @@ public class ASTConditional : AST
     public List<AST> block;
 
     public ASTConditional(ASTExpression condition, List<AST> block)
+    {
+        this.condition = condition;
+        this.block = block;
+
+    }
+}
+
+public class ASTWhile : AST
+{
+    public  ASTExpression condition;
+    public List<AST> block;
+
+    public ASTWhile(ASTExpression condition, List<AST> block)
     {
         this.condition = condition;
         this.block = block;
@@ -101,6 +126,12 @@ public static class Parser
                     var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
                     ast.AddRange(newast);
+                } else if(token.GetType() == typeof(TokenAssign)) 
+                { 
+                    var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel);
+
+                    tokens = newtokens.ToList();
+                    ast.AddRange(newast);
                 } else 
                 {
                     throw new Exception($"{token} cannot follow identifier");
@@ -123,6 +154,18 @@ public static class Parser
                         tokens = newtokens.ToList();
 
                         ast.Add(new ASTConditional(expr, newast));
+                    } break;
+                    case "while": {
+                        tokens = tokens.Skip(1).ToList();
+                        token = tokens[0];
+
+                        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+                        tokens = newtokens.ToList();
+
+                        (newtokens, var newast) = ParseBlock(tokens.ToArray());
+                        tokens = newtokens.ToList();
+
+                        ast.Add(new ASTWhile(expr, newast));
                     } break;
                 }
             }
@@ -215,6 +258,30 @@ public static class Parser
         tokens = newtokens.ToList();
         
         ast.Add(new ASTVariableDefine(label, variableType, newast));
+
+        return (tokens.ToArray(), ast);
+    }
+
+    public static (Token[], List<AST>) ParseVariableReassign(Token[] tokens_, string label)
+    {
+        List<Token> tokens = tokens_.ToList();
+        List<AST> ast = new();
+
+        var token = tokens[0];
+
+        if(token.GetType() == typeof(TokenAssign))
+        {
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+        } else {
+            throw new Exception("Expected assign found " + token.ToString());
+        }
+
+        var (newtokens, newast) = ParseExpression(tokens.ToArray());
+
+        tokens = newtokens.ToList();
+        
+        ast.Add(new ASTVariableReassign(label, newast));
 
         return (tokens.ToArray(), ast);
     }

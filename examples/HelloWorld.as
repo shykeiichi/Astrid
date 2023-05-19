@@ -4,3 +4,8 @@ if val + val2 == "HelloWorld"
 {
     print(message: val + " " + val2);
 }
+while val == "Hello"
+{
+    print(message: "hellu");
+    val = "ghas";
+}
