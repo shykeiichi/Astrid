@@ -19,7 +19,7 @@ class Program
 
         // Tokenizer.TokenizeFromFile("./examples/Expression.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
 
-        Token[] tokens = Tokenizer.TokenizeFromFile("examples/HelloWorld.as");
+        Token[] tokens = Tokenizer.TokenizeFromFile("examples/Fibonacci.as");
 
         // tokens.ToList().ForEach(e => Console.WriteLine(Tokenizer.GetTokenAsHuman(e)));
 

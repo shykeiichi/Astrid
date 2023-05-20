@@ -74,6 +74,46 @@ internal class TokenAssign : Token
     }
 }
 
+internal class TokenAssignMinus : Token
+{
+    public TokenAssignMinus(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "-=";
+    }
+}
+
+internal class TokenAssignPlus : Token
+{
+    public TokenAssignPlus(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "+=";
+    }
+}
+
+internal class TokenAssignDivide : Token
+{
+    public TokenAssignDivide(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "/=";
+    }
+}
+
+internal class TokenAssignMultiply : Token
+{
+    public TokenAssignMultiply(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "*=";
+    }
+}
+
+internal class TokenAssignPower : Token
+{
+    public TokenAssignPower(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "^=";
+    }
+}
+
 internal class TokenComma : Token
 {
     public TokenComma(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)

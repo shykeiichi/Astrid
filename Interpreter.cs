@@ -138,7 +138,83 @@ public static class Interpreter
                         throw new Exception($"Invalid type in reassign {Variables[call.label].Item1}");
                 }
 
-                Variables[call.label] = (type, value);                
+                switch(call.asop)
+                {
+                    case AssignOp.Assign: {
+                        Variables[call.label] = (type, value);
+                    } break;
+                    case AssignOp.Plus: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) + int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) + float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.String: {
+                                Variables[call.label] = (type, new TokenString(Variables[call.label].Item2.value + value.value, value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                        }
+                    } break;
+                    case AssignOp.Minus: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) - int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) - float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                throw new Exception($"Can't use operator minus with {type}");
+                            }
+                        }
+                    } break;
+                    case AssignOp.Multiply: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) * int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) * float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                throw new Exception($"Can't use operator multiply with {type}");
+                            }
+                        }
+                    } break;
+                    case AssignOp.Divide: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) / int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) / float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                throw new Exception($"Can't use operator divide with {type}");
+                            }
+                        }
+                    } break;
+                    case AssignOp.Power: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt(Math.Pow(int.Parse(Variables[call.label].Item2.value), int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat(Math.Pow(float.Parse(Variables[call.label].Item2.value), float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                throw new Exception($"Can't use operator power with {type}");
+                            }
+                        }
+                    } break;
+                }
+                              
             } else if(a.GetType() == typeof(ASTFunctionCall))
             {
                 var call = (ASTFunctionCall)a;
@@ -253,26 +329,26 @@ public static class Interpreter
                             value = (left.value != right.value).ToString().ToLower();
                         } else if(token.GetType() == typeof(TokenGreater))
                         {   
-                            if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(token.GetType()))
-                                throw new Exception("Cannot apply greater than to non int or float type");
+                            if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(left.GetType()) || !new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(right.GetType()))
+                                throw new Exception($"Cannot apply greater than to non int or float type, {Tokenizer.GetTokenAsHuman(left)}, {Tokenizer.GetTokenAsHuman(right)}");
 
                             value = (float.Parse(left.value) > float.Parse(right.value)).ToString().ToLower();
                         } else if(token.GetType() == typeof(TokenGreaterEquals))
                         {   
-                            if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(token.GetType()))
-                                throw new Exception("Cannot apply greater equals than to non int or float type");
+                          if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(left.GetType()) || !new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(right.GetType()))
+                                throw new Exception($"Cannot apply greaterequals than to non int or float type, {Tokenizer.GetTokenAsHuman(left)}, {Tokenizer.GetTokenAsHuman(right)}");
 
                             value = (float.Parse(left.value) >= float.Parse(right.value)).ToString().ToLower();
                         } else if(token.GetType() == typeof(TokenLesser))
                         {   
-                            if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(token.GetType()))
-                                throw new Exception("Cannot apply lesser than to non int or float type");
+                          if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(left.GetType()) || !new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(right.GetType()))
+                                throw new Exception($"Cannot apply lesser than to non int or float type, {Tokenizer.GetTokenAsHuman(left)}, {Tokenizer.GetTokenAsHuman(right)}");
 
                             value = (float.Parse(left.value) < float.Parse(right.value)).ToString().ToLower();
                         } else if(token.GetType() == typeof(TokenLesserEquals))
                         {   
-                            if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(token.GetType()))
-                                throw new Exception("Cannot apply lesser equals than to non int or float type");
+                          if(!new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(left.GetType()) || !new [] {typeof(TokenInt), typeof(TokenFloat)}.Contains(right.GetType()))
+                                throw new Exception($"Cannot apply lesserequals than to non int or float type, {Tokenizer.GetTokenAsHuman(left)}, {Tokenizer.GetTokenAsHuman(right)}");
 
                             value = (float.Parse(left.value) <= float.Parse(right.value)).ToString().ToLower();
                         }
@@ -282,6 +358,7 @@ public static class Interpreter
                         stack.RemoveAt(stack.Count - 2);
                     } else 
                     {
+                        //Console.WriteLine("expr");
                         throw new Exception($"Types don't match in expression equals. Matching left: {left.GetType()}, right: {right.GetType()}");    
                     }
                 } else if(Parser.ExprOperatorsAlgebraic.Keys.Contains(token.GetType()))

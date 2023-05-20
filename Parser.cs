@@ -28,11 +28,13 @@ public class ASTVariableReassign : AST
 {
     public string label;
     public ASTExpression value;
+    public AssignOp asop;
 
-    public ASTVariableReassign(string label, ASTExpression value)
+    public ASTVariableReassign(string label, ASTExpression value, AssignOp asop)
     {
         this.label = label;
         this.value = value;
+        this.asop = asop;
     }
 }
 
@@ -84,6 +86,16 @@ public class ASTWhile : AST
     }
 }
 
+public enum AssignOp 
+{
+    Assign,
+    Plus,
+    Minus,
+    Divide,
+    Multiply,
+    Power
+}
+
 public static class Parser
 {
     public static (Token[], List<AST>) ParseBlock(Token[] tokens_)
@@ -126,9 +138,35 @@ public static class Parser
                     var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
                     ast.AddRange(newast);
-                } else if(token.GetType() == typeof(TokenAssign)) 
+                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignPlus), typeof(TokenAssignMinus), typeof(TokenAssignDivide), typeof(TokenAssignMultiply), typeof(TokenAssignPower)}.Contains(token.GetType())) 
                 { 
-                    var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel);
+                    AssignOp asop;
+                    if(token.GetType() == typeof(TokenAssign))
+                    {
+                        asop = AssignOp.Assign;
+                    } else if(token.GetType() == typeof(TokenAssignPlus))
+                    {
+                        asop = AssignOp.Plus;
+                    } else if(token.GetType() == typeof(TokenAssignMinus))
+                    {
+                        asop = AssignOp.Minus;
+                    } else if(token.GetType() == typeof(TokenAssignDivide))
+                    {
+                        asop = AssignOp.Divide;
+                    } else if(token.GetType() == typeof(TokenAssignMultiply))
+                    {
+                        asop = AssignOp.Multiply;
+                    } else if(token.GetType() == typeof(TokenAssignPower))
+                    {
+                        asop = AssignOp.Power;
+                    } else 
+                    {
+                        throw new Exception("Invalid asop");
+                    }
+
+                    tokens = tokens.Skip(1).ToList();
+
+                    var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, asop);
 
                     tokens = newtokens.ToList();
                     ast.AddRange(newast);
@@ -262,26 +300,18 @@ public static class Parser
         return (tokens.ToArray(), ast);
     }
 
-    public static (Token[], List<AST>) ParseVariableReassign(Token[] tokens_, string label)
+    public static (Token[], List<AST>) ParseVariableReassign(Token[] tokens_, string label, AssignOp asop)
     {
         List<Token> tokens = tokens_.ToList();
         List<AST> ast = new();
 
         var token = tokens[0];
 
-        if(token.GetType() == typeof(TokenAssign))
-        {
-            tokens = tokens.Skip(1).ToList();
-            token = tokens[0];
-        } else {
-            throw new Exception("Expected assign found " + token.ToString());
-        }
-
         var (newtokens, newast) = ParseExpression(tokens.ToArray());
 
         tokens = newtokens.ToList();
         
-        ast.Add(new ASTVariableReassign(label, newast));
+        ast.Add(new ASTVariableReassign(label, newast, asop));
 
         return (tokens.ToArray(), ast);
     }
