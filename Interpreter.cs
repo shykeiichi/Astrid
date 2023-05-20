@@ -42,13 +42,9 @@ public static class Interpreter
         }
     }
 
-    public static void Run(List<AST> ast, Dictionary<string, (Types, Token)> oldVariables)
+    public static void Run(List<AST> ast, Dictionary<string, (Types, Token)> Variables)
     {
-        Dictionary<string, (Types, Token)> Variables = new();
-        foreach(var ov in oldVariables)
-        {
-            Variables.Add(ov.Key, ov.Value);
-        }
+        List<string> AddedVariables = new();
 
         Dictionary<string, (Dictionary<string, Types>, List<AST>)> Functions = new();
         Dictionary<string, (Dictionary<string, Types>, Action<Dictionary<string, Token>>)> Builtins = new()
@@ -104,6 +100,8 @@ public static class Interpreter
                         throw new Exception($"Invalid type {call.type}");
                 }
 
+                AddedVariables.Add(call.label);
+
                 Variables.Add(call.label, (type, value));                
             } else if(a.GetType() == typeof(ASTVariableReassign))
             {
@@ -111,7 +109,7 @@ public static class Interpreter
                 var value = RunExpression(call.value, Variables);
                 Types type;
 
-                Console.WriteLine("reached as");
+                // Console.WriteLine("reached as");
 
                 if(!Variables.Keys.Contains(call.label))
                     throw new Exception($"Variable {call.label} doens't exist so it can't be reassigned");
@@ -202,6 +200,11 @@ public static class Interpreter
                     Run(call.block, Variables);
                 }
             }
+        }
+
+        foreach(string vari in AddedVariables)
+        {
+            Variables.Remove(vari);
         }
 
         // foreach(var kvp in Variables)
