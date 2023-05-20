@@ -2,12 +2,12 @@ namespace Astrid;
 
 public class Token
 {
-    public new string value;
+    public string value;
 
-    public new int lineStart;
-    public new int lineEnd;
-    public new int charStart;
-    public new int charEnd;
+    public int lineStart;
+    public int lineEnd;
+    public int charStart;
+    public int charEnd;
 
     public Token(string value, int lineStart, int lineEnd, int charStart, int charEnd)
     {
@@ -21,6 +21,7 @@ public class Token
 
     public Token(int lineStart, int lineEnd, int charStart, int charEnd)
     {
+        this.value = "";
     }
 }
 
