@@ -19,7 +19,7 @@ class Program
 
         // Tokenizer.TokenizeFromFile("./examples/Expression.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
 
-        Token[] tokens = Tokenizer.TokenizeFromFile("examples/Fibonacci.as");
+        Token[] tokens = Tokenizer.TokenizeFromFile("examples/Function.as");
 
         // tokens.ToList().ForEach(e => Console.WriteLine(Tokenizer.GetTokenAsHuman(e)));
 
@@ -27,11 +27,11 @@ class Program
 
         var parsed = Parser.ParseBlock(tokens);
 
-        // PrintAST(parsed.Item2);
+        PrintAST(parsed.Item2);
 
         // Console.WriteLine("Run: =======================");
         
-        Interpreter.Run(parsed.Item2, new());
+        // Interpreter.Run(parsed.Item2, new());
     }
 
     static void PrintAST(List<AST> a)
@@ -45,16 +45,12 @@ class Program
                 Console.WriteLine(" Label: " + call.label);
                 Console.WriteLine(" Type : " + call.type);
                 Console.Write(" Value: ");
-                call.value.expression.ForEach(e => Console.Write(e.value + " "));
+                call.value.expression.ForEach(e => Console.Write(((Token)e).value + " "));
                 Console.WriteLine();
             } else if(d.GetType() == typeof(ASTFunctionCall))
             {
                 var call = ((ASTFunctionCall)d);
-                Console.WriteLine("Function Call:");
-                Console.WriteLine(" Label: " + call.label);
-                Console.Write(" Parameters: ");
-                call.value.ToList().ForEach(e => Console.Write($"{e.Key}: {e.Value}, "));
-                Console.WriteLine();
+                PrintFunctionCall(call);
             } else if(d.GetType() == typeof(ASTConditional))
             {
                 var call = ((ASTConditional)d);
@@ -63,5 +59,24 @@ class Program
                 PrintAST(call.block);
             }
         }
+    }
+
+    static void PrintFunctionCall(ASTFunctionCall call)
+    {
+        Console.Write($"{call.label}(");
+        call.value.ToList().ForEach(e => {
+            Console.Write($"{e.Key}: ");
+            e.Value.expression.ForEach(f => {
+                if(f.GetType() == typeof(ASTFunctionCall))
+                {
+                    PrintFunctionCall((ASTFunctionCall)f);
+                } else 
+                {
+                    Console.Write(Tokenizer.GetTokenAsHuman((Token)f));
+                }
+            });
+            Console.Write(", ");
+        });
+        Console.WriteLine(")");
     }
 }

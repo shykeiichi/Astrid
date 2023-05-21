@@ -1,7 +1,7 @@
 namespace Astrid;
 
 public static class Tokenizer {
-    public static List<string> Keywords = new() {"enum", "class", "if", "while"};
+    public static List<string> Keywords = new() {"enum", "class", "if", "while", "return"};
 
     public static Token[] TokenizeFromFile(string path) {
         return TokenizeFromMemory(File.ReadAllLines(path));

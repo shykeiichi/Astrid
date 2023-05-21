@@ -73,7 +73,7 @@ public static class Interpreter
             if(a.GetType() == typeof(ASTVariableDefine))
             {
                 var call = (ASTVariableDefine)a;
-                var value = RunExpression(call.value, Variables);
+                var value = RunExpression(call.value, Variables, Builtins, Functions);
                 Types type;
 
                 switch(call.type)
@@ -106,7 +106,7 @@ public static class Interpreter
             } else if(a.GetType() == typeof(ASTVariableReassign))
             {
                 var call = (ASTVariableReassign)a;
-                var value = RunExpression(call.value, Variables);
+                var value = RunExpression(call.value, Variables, Builtins, Functions);
                 Types type;
 
                 // Console.WriteLine("reached as");
@@ -219,24 +219,12 @@ public static class Interpreter
             {
                 var call = (ASTFunctionCall)a;
 
-                Dictionary<string, Token> fixedParameters = new();
-
-                foreach(var b in call.value)
-                {
-                    fixedParameters.Add(b.Key, RunExpression(b.Value, Variables));
-                }
-
-                if(Builtins.Keys.Contains(call.label))
-                {
-                    Builtins[call.label].Item2(fixedParameters);
-                } else {
-                    throw new Exception($"Function {call.label} not found");
-                }
+                RunFunction(call, Builtins, Functions, Variables);
             } else if(a.GetType() == typeof(ASTConditional))
             {
                 var call = (ASTConditional)a;
                 
-                var result = RunExpression(call.condition, Variables);
+                var result = RunExpression(call.condition, Variables, Builtins, Functions);
 
                 // call.condition.expression.ForEach(e => Console.Write(Tokenizer.GetTokenAsHuman(e) + " "));
                 // Console.WriteLine();
@@ -252,7 +240,7 @@ public static class Interpreter
             {
                 var call = (ASTWhile)a;
                 
-                var result = RunExpression(call.condition, Variables);
+                var result = RunExpression(call.condition, Variables, Builtins, Functions);
 
                 // call.condition.expression.ForEach(e => Console.Write(Tokenizer.GetTokenAsHuman(e) + " "));
                 // Console.WriteLine();
@@ -261,7 +249,7 @@ public static class Interpreter
 
                 while(run)
                 {
-                    result = RunExpression(call.condition, Variables);
+                    result = RunExpression(call.condition, Variables, Builtins, Functions);
 
                     if(result.value != "true")
                     {
@@ -289,9 +277,39 @@ public static class Interpreter
         // }
     }
 
-    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> variables)
+    public static void RunFunction(ASTFunctionCall call, Dictionary<string, (Dictionary<string, Types>, Action<Dictionary<string, Token>>)> Builtins, Dictionary<string, (Dictionary<string, Types>, List<AST>)> Functions, Dictionary<string, (Types, Token)> Variables)
     {
-        List<Token> tokens = _expr.expression;
+        Dictionary<string, Token> fixedParameters = new();
+
+        foreach(var b in call.value)
+        {
+            fixedParameters.Add(b.Key, RunExpression(b.Value, Variables, Builtins, Functions));
+        }
+
+        if(Builtins.Keys.Contains(call.label))
+        {
+            Builtins[call.label].Item2(fixedParameters);
+        } else {
+            throw new Exception($"Function {call.label} not found");
+        }
+    }
+
+    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> variables, Dictionary<string, (Dictionary<string, Types>, Action<Dictionary<string, Token>>)> Builtins, Dictionary<string, (Dictionary<string, Types>, List<AST>)> Functions)
+    {
+        List<object> tokensOld = _expr.expression;
+
+        List<Token> tokens = new();
+
+        foreach(var tok in tokensOld)
+        {
+            if(tok.GetType() == typeof(Token))
+            {
+                tokens.Add((Token)tok);
+            } else if(tok.GetType() == typeof(ASTFunctionCall))
+            {
+                RunFunction((ASTFunctionCall)tok, Builtins, Functions, variables);
+            }
+        }
 
         List<Token> stack = new();
 
@@ -299,6 +317,8 @@ public static class Interpreter
         {
             var token = tokens[0];
             tokens = tokens.Skip(1).ToList();
+
+            // Console.WriteLine("Intepret " + token);
 
             if(Parser.ExprValues.Contains(token.GetType()))
             {
