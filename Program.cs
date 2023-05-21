@@ -2,6 +2,8 @@
 
 class Program
 {
+    public static string sourceFile = "";
+
     static void Main(string[] args)
     {
         foreach(var kvp in Parser.ExprOperatorsEquality)
@@ -17,9 +19,17 @@ class Program
             Parser.ExprOperators.Add(kvp.Key, kvp.Value);
         }
 
+        if(args.Length == 0)
+        {
+            Console.WriteLine("No input file given");
+            return;
+        } else {
+            sourceFile = args[0];
+        }
+
         // Tokenizer.TokenizeFromFile("./examples/Expression.as").ToList().ForEach((a) => Console.WriteLine(Tokenizer.GetTokenAsHuman(a)));
 
-        Token[] tokens = Tokenizer.TokenizeFromFile("examples/Function.as");
+        Token[] tokens = Tokenizer.TokenizeFromFile(args[0]);
 
         // tokens.ToList().ForEach(e => Console.WriteLine(Tokenizer.GetTokenAsHuman(e)));
 
@@ -45,7 +55,12 @@ class Program
                 Console.WriteLine(" Label: " + call.label);
                 Console.WriteLine(" Type : " + call.type);
                 Console.Write(" Value: ");
-                call.value.expression.ForEach(e => Console.Write(((Token)e).value + " "));
+                call.value.expression.ForEach(e => {
+                    if(e.GetType() != typeof(ASTFunctionCall))
+                        Console.Write(((dynamic)e).value + " ");
+                    else
+                        PrintFunctionCall((ASTFunctionCall)e);
+                });
                 Console.WriteLine();
             } else if(d.GetType() == typeof(ASTFunctionCall))
             {
@@ -57,6 +72,32 @@ class Program
                 Console.WriteLine("Conditional:");
                 Console.WriteLine(" Condition: " + call.condition);
                 PrintAST(call.block);
+            } else if(d.GetType() == typeof(ASTFunctionDefine))
+            {
+                var call = ((ASTFunctionDefine)d);
+                Console.WriteLine("Function Define:");
+                Console.Write(" Parameters: ");
+                call.parameters.ForEach(e => {
+                    Console.Write($"{e.Item1}: {e.Item2}, ");
+                });
+                Console.WriteLine("\nBody: {");
+                PrintAST(call.block);
+                Console.WriteLine("}");
+            } else if(d.GetType() == typeof(ASTReturn))
+            {
+                var call = ((ASTReturn)d);
+                Console.WriteLine("Return:");
+                Console.Write(" ");
+                call.expression.expression.ForEach(e => {
+                    if(e.GetType() == typeof(ASTFunctionCall))
+                    {
+                        PrintFunctionCall((ASTFunctionCall)e);
+                    } else 
+                    {
+                        Console.Write(((Token)e).value + " ");
+                    }
+                });
+                Console.WriteLine();
             }
         }
     }
@@ -72,7 +113,8 @@ class Program
                     PrintFunctionCall((ASTFunctionCall)f);
                 } else 
                 {
-                    Console.Write(Tokenizer.GetTokenAsHuman((Token)f));
+
+                    Console.Write(((Token)f).value + " ");
                 }
             });
             Console.Write(", ");

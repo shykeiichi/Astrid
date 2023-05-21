@@ -8,15 +8,22 @@ using System.Threading.Tasks;
 
 namespace Astrid;
 
+public enum Types
+{
+    String,
+    Int,
+    Float
+}
+
 public class AST { }
 
 public class ASTVariableDefine : AST
 {
     public string label;
-    public string type;
+    public Types type;
     public ASTExpression value;
 
-    public ASTVariableDefine(string label, string type, ASTExpression value)
+    public ASTVariableDefine(string label, Types type, ASTExpression value)
     {
         this.label = label;
         this.type = type;
@@ -132,186 +139,74 @@ public static class Parser
         while(tokens.Count > 0) 
         {
             var token = tokens[0];
-            // Console.WriteLine(Tokenizer.GetTokenAsHuman(token));
 
-            if(token.GetType() == typeof(TokenBlockEnd))
+            Tokenizer.Print(token);
+
+            if(token.GetType() == typeof(TokenEOL))
             {
                 tokens = tokens.Skip(1).ToList();
+            } else if(token.GetType() == typeof(TokenBlockEnd)) 
+            { 
+                tokens = tokens.Skip(1).ToList();
                 return (tokens.ToArray(), ast);
-            }
-
-            if(token.GetType() == typeof(TokenIdentifier))
+            } else if(token.GetType() == typeof(TokenIdentifier))
             {
-                var identifierLabel = tokens[0].value;
-                
+                var identifierLabel = token.value;
                 tokens = tokens.Skip(1).ToList();
                 token = tokens[0];
 
-                if(token.GetType() == typeof(TokenColon))
+                if(token.GetType() == typeof(TokenDoubleColon))
                 {
                     tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
-                    var (newtokens, newast) = ParseVariable(tokens.ToArray(), identifierLabel);
-
-                    tokens = newtokens.ToList();
-                    ast.AddRange(newast);
-                } else if(token.GetType() == typeof(TokenParenStart)) 
-                {
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
-                    var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), identifierLabel);
-                    tokens = newtokens.ToList();
-                    ast.AddRange(newast);
-                } else if(token.GetType() == typeof(TokenDoubleColon))
-                {
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-
                     var (newtokens, newast) = ParseFunctionDefine(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
-                    ast.AddRange(newast);
-                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignPlus), typeof(TokenAssignMinus), typeof(TokenAssignDivide), typeof(TokenAssignMultiply), typeof(TokenAssignPower)}.Contains(token.GetType())) 
-                { 
-                    AssignOp asop;
-                    if(token.GetType() == typeof(TokenAssign))
-                    {
-                        asop = AssignOp.Assign;
-                    } else if(token.GetType() == typeof(TokenAssignPlus))
-                    {
-                        asop = AssignOp.Plus;
-                    } else if(token.GetType() == typeof(TokenAssignMinus))
-                    {
-                        asop = AssignOp.Minus;
-                    } else if(token.GetType() == typeof(TokenAssignDivide))
-                    {
-                        asop = AssignOp.Divide;
-                    } else if(token.GetType() == typeof(TokenAssignMultiply))
-                    {
-                        asop = AssignOp.Multiply;
-                    } else if(token.GetType() == typeof(TokenAssignPower))
-                    {
-                        asop = AssignOp.Power;
-                    } else 
-                    {
-                        throw new Exception("Invalid asop");
-                    }
-
-                    tokens = tokens.Skip(1).ToList();
-
-                    var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, asop);
-
-                    tokens = newtokens.ToList();
-                    ast.AddRange(newast);
-                } else 
+                    ast.Add(newast);
+                } else if(token.GetType() == typeof(TokenParenStart))
                 {
-                    throw new Exception($"{Tokenizer.GetTokenAsHuman(token)} cannot follow identifier");
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), identifierLabel);
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
+                } else if(token.GetType() == typeof(TokenColon))
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseVariableDefine(tokens.ToArray(), identifierLabel);
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);   
                 }
-            } else if(token.GetType() == typeof(TokenEOL))
-            {
-                tokens = tokens.Skip(1).ToList();
             } else if(token.GetType() == typeof(TokenKeyword))
             {
-                switch(token.value)
-                {
-                    case "if": {
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-
-                        var (newtokens, expr) = ParseExpression(tokens.ToArray());
-                        tokens = newtokens.ToList();
-
-                        (newtokens, var newast) = ParseBlock(tokens.ToArray());
-                        tokens = newtokens.ToList();
-
-                        ast.Add(new ASTConditional(expr, newast));
-                    } break;
-                    case "while": {
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-
-                        var (newtokens, expr) = ParseExpression(tokens.ToArray());
-                        tokens = newtokens.ToList();
-
-                        (newtokens, var newast) = ParseBlock(tokens.ToArray());
-                        tokens = newtokens.ToList();
-
-                        ast.Add(new ASTWhile(expr, newast));
-                    } break;
-                    case "return": {
-                        tokens = tokens.Skip(1).ToList();
-                        token = tokens[0];
-
-                        var (newtokens, expr) = ParseExpression(tokens.ToArray());
-                        tokens = newtokens.ToList();
-
-                        ast.Add(new ASTReturn(expr));
-                    } break;
-                }
-            }
-        }
-        
-        return (tokens.ToArray(), ast);
-    }
-
-    public static (Token[], List<AST>) ParseFunctionCall(Token[] tokens_, string function)
-    {
-        List<Token> tokens = tokens_.ToList();
-        List<AST> ast = new();
-        Dictionary<string, ASTExpression> parameters = new();       
-
-        while(tokens.Count > 0) 
-        {
-            var token = tokens[0];
-
-            // Console.WriteLine("fc " + Tokenizer.GetTokenAsHuman(token));
-
-            if(token.GetType() == typeof(TokenParenEnd) || token.GetType() == typeof(TokenEOL))
-            {
-                ast.Add(new ASTFunctionCall(function, parameters));
-                tokens = tokens.Skip(1).ToList();
-
-                return (tokens.ToArray(), ast);
-            }
-
-            if(token.GetType() == typeof(TokenIdentifier))
-            {   
-                string parameterLabel = token.value;
-
-                tokens = tokens.Skip(1).ToList();
-                token = tokens[0];
-                
-                if(token.GetType() == typeof(TokenColon))
+                if(token.value == "return")
                 {
                     tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-                } else 
+                    var (newtokens, newast) = ParseReturn(tokens.ToArray());
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
+                } else if(token.value == "if")
                 {
-                    throw new Exception($"Expected colon after identifier in function call found ${Tokenizer.GetTokenAsHuman(token)}");
+                    
                 }
-
-                var (newtokens, expr) = ParseExpression(tokens.ToArray());
-                parameters.Add(parameterLabel, expr);
-
-                tokens = newtokens.ToList();
-
-                token = tokens[0];
-            } else
-            {
-                throw new Exception($"Expected identifier found {Tokenizer.GetTokenAsHuman(token)}");
             }
         }
 
-        ast.Add(new ASTFunctionCall(function, parameters));
-
         return (tokens.ToArray(), ast);
     }
+    
+    public static Types GetTypeFromToken(Token t)
+    {
+        switch(t.value)
+        {
+            case "int": return Types.Int;
+            case "float": return Types.Float;
+            case "string": return Types.String;
+            default: Error.Throw($"Invalid type", t); return Types.Int;
+        }
+    }
 
-    public static (Token[], List<AST>) ParseFunctionDefine(Token[] tokens_, string label)
+    public static (Token[], AST) ParseFunctionDefine(Token[] tokens_, string label)
     {
         List<Token> tokens = tokens_.ToList();
-        List<AST> ast = new();
+        AST ast = new();
 
         var token = tokens[0];
 
@@ -319,24 +214,26 @@ public static class Parser
         {
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
-        } else
+        } else 
         {
-            throw new Exception($"Expected paren start found {Tokenizer.GetTokenAsHuman(token)}");
+            Error.Throw("Expected left parenthesis '(' after double colon '::'", token);   
         }
 
         List<(string, Types)> parameters = new();
 
-        while(token.GetType() != typeof(TokenParenEnd))
+        bool parametersDone = false;
+        while(tokens.Count > 0 || !parametersDone)
         {
-            var name = "";
+            token = tokens[0];
+
+            var parameterLabel = "";
             if(token.GetType() == typeof(TokenIdentifier))
-            {
-                name = token.value;
+            {   
+                parameterLabel = token.value;
                 tokens = tokens.Skip(1).ToList();
                 token = tokens[0];
-            } else 
-            {
-                throw new Exception($"Expected identifier found {Tokenizer.GetTokenAsHuman(token)}");
+            } else {
+                Error.Throw("Expected identifier as paramter label", token);
             }
 
             if(token.GetType() == typeof(TokenColon))
@@ -345,138 +242,152 @@ public static class Parser
                 token = tokens[0];
             } else 
             {
-                throw new Exception($"Expected colon after identifier found {Tokenizer.GetTokenAsHuman(token)}");
+                Error.Throw("Expected colon after parameter label", token);   
             }
 
-            var type = "";
+            Token type = default(Token)!;
             if(token.GetType() == typeof(TokenIdentifier))
+            {   
+                type = token;
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+            } else {
+                Error.Throw("Expected type", token);
+            }
+
+            parameters.Add((parameterLabel, GetTypeFromToken(type)));
+
+            if(token.GetType() == typeof(TokenParenEnd))
             {
-                type = token.value;
+                parametersDone = true;
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+
+                break;
+            }
+
+            if(token.GetType() == typeof(TokenComma))
+            {
                 tokens = tokens.Skip(1).ToList();
                 token = tokens[0];
             } else 
             {
-                throw new Exception($"Expected type found {Tokenizer.GetTokenAsHuman(token)}");
+                Error.Throw("Expected comma after parameter label", token);   
             }
-
-            Types astype;
-            switch(type)
-            {
-                case "int": astype = Types.Int; break;
-                case "float": astype = Types.Float; break;
-                case "string": astype = Types.String; break;
-                case "any": astype = Types.Any; break;
-                default: throw new Exception($"Invalid type {type}");
-            }
-
-            if(token.GetType() != typeof(TokenParenEnd))
-            {
-                if(token.GetType() == typeof(TokenComma))
-                {
-                    tokens = tokens.Skip(1).ToList();
-                    token = tokens[0];
-                } else 
-                {
-                    throw new Exception($"Expected comma after type found {Tokenizer.GetTokenAsHuman(token)}");
-                }
-            }
-
-            parameters.Add((name, astype));
         }
-        tokens = tokens.Skip(1).ToList();
-        token = tokens[0];
 
-        Types returnType;
+        Types returnType = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
-        {
-            switch(token.value)
-            {
-                case "int": returnType = Types.Int; break;
-                case "float": returnType = Types.Float; break;
-                case "string": returnType = Types.String; break;
-                case "any": returnType = Types.Any; break;
-                default: throw new Exception($"Invalid type {token.value}");
-            }
+        {   
+            returnType = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
         } else {
-            throw new Exception($"Expected return type after parameters found {Tokenizer.GetTokenAsHuman(token)}");
+            Error.Throw("Expected return type", token);
         }
 
+        List<AST> block = new();
         if(token.GetType() == typeof(TokenBlockStart))
         {
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
+
+            var (newtokens, newast) = ParseBlock(tokens.ToArray());
+            block = newast;
+            tokens = newtokens.ToList();
         } else {
-            throw new Exception($"Expected block start after function parameters found {Tokenizer.GetTokenAsHuman(token)}");
+            Error.Throw("Expected block start", token);
         }
 
-        var (newtokens, newast) = ParseBlock(tokens.ToArray());
-        tokens = newtokens.ToList();
-
-        ast.Add(new ASTFunctionDefine(label, parameters, returnType, newast));
+        ast = new ASTFunctionDefine(label, parameters, returnType, block);
 
         return (tokens.ToArray(), ast);
     }
 
-    public static (Token[], List<AST>) ParseVariable(Token[] tokens_, string label)
+    public static (Token[], AST) ParseFunctionCall(Token[] tokens_, string function)
     {
         List<Token> tokens = tokens_.ToList();
-        List<AST> ast = new();
+        AST ast = new();
+
+        Dictionary<string, ASTExpression> parameters = new();
+
+        bool parametersDone = false;
+        while(tokens.Count > 0 || !parametersDone)
+        {
+            var token = tokens[0];
+
+            var parameterLabel = "";
+            if(token.GetType() == typeof(TokenIdentifier))
+            {   
+                parameterLabel = token.value;
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+            } else {
+                Error.Throw("Expected identifier as paramter label", token);
+            }
+
+            if(token.GetType() == typeof(TokenColon))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+            } else 
+            {
+                Error.Throw("Expected colon after parameter label", token);   
+            }
+
+            var (newtokens, newast) = ParseExpression(tokens.ToArray());
+            tokens = newtokens.ToList();
+            token = tokens[0];
+
+            parameters.Add(parameterLabel, newast);
+
+            if(token.GetType() == typeof(TokenParenEnd) || token.GetType() == typeof(TokenEOL))
+            {
+                return (tokens.ToArray(), new ASTFunctionCall(function, parameters));
+            }
+        }
+        return (tokens.ToArray(), new ASTFunctionCall(function, parameters));
+    }
+
+    public static (Token[], AST) ParseReturn(Token[] tokens)
+    {
+        var (newtokens, newast) = ParseExpression(tokens);   
+
+        return (newtokens, new ASTReturn(newast));
+    }
+
+    public static (Token[], AST) ParseVariableDefine(Token[] tokens_, string label)
+    {
+        List<Token> tokens = tokens_.ToList();
+        AST ast = new();
 
         var token = tokens[0];
 
-        string variableType = "";
+        Types type = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
         {
-            variableType = token.value;
-        } else {
-            throw new Exception("Expected type found " + token.ToString());
-        }
-
-        switch(variableType)
+            type = GetTypeFromToken(token);
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+        } else 
         {
-            case "int": break;
-            case "float": break;
-            case "string": break;
-            case "any": break;
-            default: throw new Exception($"Invalid type {variableType}");
+            Error.Throw("Expected type", token);   
         }
-
-        tokens = tokens.Skip(1).ToList();
-        token = tokens[0];
 
         if(token.GetType() == typeof(TokenAssign))
         {
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
-        } else {
-            throw new Exception("Expected assign found " + token.ToString());
+        } else 
+        {
+            Error.Throw("Expected assign '='", token);   
         }
 
-        var (newtokens, newast) = ParseExpression(tokens.ToArray());
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
 
         tokens = newtokens.ToList();
-        
-        ast.Add(new ASTVariableDefine(label, variableType, newast));
 
-        return (tokens.ToArray(), ast);
-    }
-
-    public static (Token[], List<AST>) ParseVariableReassign(Token[] tokens_, string label, AssignOp asop)
-    {
-        List<Token> tokens = tokens_.ToList();
-        List<AST> ast = new();
-
-        var token = tokens[0];
-
-        var (newtokens, newast) = ParseExpression(tokens.ToArray());
-
-        tokens = newtokens.ToList();
-        
-        ast.Add(new ASTVariableReassign(label, newast, asop));
-
-        return (tokens.ToArray(), ast);
+        return (tokens.ToArray(), new ASTVariableDefine(label, type, expr)); 
     }
 
     public static Type[] ExprValues = new [] {typeof(TokenInt), typeof(TokenFloat), typeof(TokenString), typeof(TokenIdentifier)};
@@ -527,7 +438,7 @@ public static class Parser
                 while(OperatorQueue.Count > 0)
                 {
                     if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
-                        throw new Exception("Can't be left parnthesis");
+                        Error.Throw("Can't be left parnthesis", OperatorQueue.Last());
 
                     OutputQueue.Add(OperatorQueue.Last());
                     OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
@@ -546,7 +457,7 @@ public static class Parser
                         tokens = tokens.Skip(1).ToList();
                         var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), token.value);
                         tokens = newtokens.ToList();
-                        OutputQueue.Add(newast[0]);
+                        OutputQueue.Add(newast);
                         // Console.WriteLine("done parse");
                     } else {
                         OutputQueue.Add(token);
@@ -582,14 +493,14 @@ public static class Parser
                     OperatorQueue.Last().GetType() != typeof(TokenParenStart)
                 ) {
                     if(OperatorQueue.Count == 0)
-                        throw new Exception("Unmatched parenthesis");
+                        Error.Throw("Unmatched parnthesis", OperatorQueue.Last());
 
                     OutputQueue.Add(OperatorQueue.Last());
                     OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
                 }
 
-                if(OperatorQueue.GetType() == typeof(TokenParenStart))
-                    throw new Exception("Expected left parenthesis");
+                if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                    Error.Throw("Expected left parnthesis", OperatorQueue.Last());
 
                 OperatorQueue.RemoveAt(OperatorQueue.Count - 1);                
             }
@@ -598,7 +509,7 @@ public static class Parser
         while(OperatorQueue.Count > 0)
         {
             if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
-                throw new Exception("Can't be left parnthesis");
+                Error.Throw("Can't be left parnthesis", OperatorQueue.Last());
 
             OutputQueue.Add(OperatorQueue.Last());
             OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
@@ -607,4 +518,3 @@ public static class Parser
         return (tokens.ToArray(), new ASTExpression(OutputQueue));
     }
 }
-

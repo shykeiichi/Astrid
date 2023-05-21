@@ -25,7 +25,7 @@ public static class Tokenizer {
         void HandleCurrentWord() {
             if(currentWord != "") {
                 if(isString) {
-                    tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length, charIdx));
+                    tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length - 1, charIdx + 1));
                 } else {
                     int ivalue;
                     float fvalue;
@@ -41,7 +41,7 @@ public static class Tokenizer {
                         if(float.TryParse(currentWordwithoutEndSuffix, out fvalue)) {
                             if(currentWord.Last() == 'f')
                             {
-                                tokens.Add(new TokenFloat(fvalue.ToString(), lineIdx, lineIdx, charIdx - fvalue.ToString().Length, charIdx));
+                                tokens.Add(new TokenFloat(fvalue.ToString(), lineIdx, lineIdx, charIdx - fvalue.ToString().Length - 1, charIdx));
                                 floatsuffixsatisifed = true;
                             }
                         }
@@ -93,9 +93,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenAssign(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenAssign(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenEquals(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -105,61 +105,61 @@ public static class Tokenizer {
                     case ',': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenComma(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenComma(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
 
                     case '[': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenArrayStart(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenArrayStart(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case ']': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenArrayEnd(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenArrayEnd(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case '(': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenParenStart(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenParenStart(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case ')': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenParenEnd(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenParenEnd(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case '{': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenBlockStart(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenBlockStart(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case '}': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenBlockEnd(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenBlockEnd(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case ':': {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != ':')
-                            tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenDoubleColon(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenDoubleColon(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
                     case ';': {
                         HandleCurrentWord();
 
-                        tokens.Add(new TokenEOL(lineIdx, lineIdx, charIdx - 1, charIdx));
+                        tokens.Add(new TokenEOL(lineIdx, lineIdx, charIdx, charIdx + 1));
                     } break;
                     case '+': {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenPlus(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenPlus(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenAssignPlus(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAssignPlus(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -167,9 +167,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenMinus(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenMinus(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenAssignMinus(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAssignMinus(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -177,9 +177,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenMultiply(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenMultiply(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenAssignMultiply(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAssignMultiply(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -187,9 +187,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenDivide(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenDivide(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenAssignDivide(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAssignDivide(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -197,9 +197,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenPower(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenPower(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenAssignPower(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAssignPower(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -208,7 +208,7 @@ public static class Tokenizer {
                         {
                             HandleCurrentWord();
 
-                            tokens.Add(new TokenNamespaceSeparator(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenNamespaceSeparator(lineIdx, lineIdx, charIdx, charIdx + 1));
                         } else 
                         {
                             goto default;
@@ -220,7 +220,7 @@ public static class Tokenizer {
                         if(line[charIdx + 1] != '|')
                             goto default;
                         else {
-                            tokens.Add(new TokenOr(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenOr(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -230,7 +230,7 @@ public static class Tokenizer {
                         if(line[charIdx + 1] != '&')
                             goto default;
                         else {
-                            tokens.Add(new TokenAnd(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenAnd(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -238,9 +238,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenNot(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenNot(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenNotEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenNotEquals(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -248,9 +248,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenGreater(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenGreater(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenGreaterEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenGreaterEquals(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -258,9 +258,9 @@ public static class Tokenizer {
                         HandleCurrentWord();
 
                         if(line[charIdx + 1] != '=')
-                            tokens.Add(new TokenLesser(lineIdx, lineIdx, charIdx - 1, charIdx));
+                            tokens.Add(new TokenLesser(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
-                            tokens.Add(new TokenLesserEquals(lineIdx, lineIdx, charIdx - 1, charIdx + 1));
+                            tokens.Add(new TokenLesserEquals(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;
                         }
                     } break;
@@ -280,13 +280,22 @@ public static class Tokenizer {
 
     internal static string GetTokenAsHuman(Token t)
     {
+        string ret = "";
         if (t.GetType() == typeof(TokenString))
         {
-            return $"[{t}: \"{((dynamic)t).value}\"]";
+            ret += $"[{t}: \"{((dynamic)t).value}\"]";
         }
         else
         {
-            return $"[{t}: '{((dynamic)t).value}']";
+            ret += $"[{t}: '{((dynamic)t).value}']";
         }
+
+        // ret += $" cs: {t.charStart}, ce: {t.charEnd}, ls: {t.lineStart}, le: {t.lineEnd}";
+        return ret;
+    }
+
+    internal static void Print(Token t)
+    {
+        Console.WriteLine(GetTokenAsHuman(t));
     }
 }

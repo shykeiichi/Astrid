@@ -22,6 +22,11 @@ public class Token
     public Token(int lineStart, int lineEnd, int charStart, int charEnd)
     {
         this.value = "";
+
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+        this.charStart = charStart;
+        this.charEnd = charEnd;
     }
 }
 
