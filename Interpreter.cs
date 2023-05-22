@@ -392,7 +392,7 @@ public static class Interpreter
                     Token left = stack[stack.Count - 2];
                     Token right = stack[stack.Count - 1];
 
-                    if(left.GetType() == typeof(TokenInt) || right.GetType() == typeof(TokenInt))
+                    if(left.GetType() == typeof(TokenInt) && right.GetType() == typeof(TokenInt))
                     {
                         string value = "";
                         // Console.Write("int ");
@@ -426,7 +426,7 @@ public static class Interpreter
                         stack.Add(new TokenInt(value, left.lineStart, left.lineEnd, left.charStart, left.charEnd));
                         stack.RemoveAt(stack.Count - 2);
                         stack.RemoveAt(stack.Count - 2);
-                    } else if(left.GetType() == typeof(TokenFloat) || right.GetType() == typeof(TokenFloat))
+                    } else if(left.GetType() == typeof(TokenFloat) && right.GetType() == typeof(TokenFloat))
                     {
                         string value = "";
                         // Console.Write("float ");
@@ -460,7 +460,7 @@ public static class Interpreter
                         stack.Add(new TokenFloat(value, left.lineStart, left.lineEnd, left.charStart, left.charEnd));
                         stack.RemoveAt(stack.Count - 2);
                         stack.RemoveAt(stack.Count - 2);
-                    } else if(left.GetType() == typeof(TokenString) || right.GetType() == typeof(TokenString))
+                    } else if(left.GetType() == typeof(TokenString) && right.GetType() == typeof(TokenString))
                     {
                         string value = "";
                         // Console.Write("float ");

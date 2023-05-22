@@ -49,6 +49,13 @@ class Program
                 return null!;
             };
 
+        Func<List<Token>, object> printTokenFunc = 
+            (List<Token> parameters) => 
+            {
+                Console.WriteLine(Tokenizer.GetTokenAsHuman(parameters[0]));
+                return null!;
+            };
+
         Func<List<Token>, object> inputFunc = 
             (List<Token> parameters) => 
             {
@@ -57,6 +64,23 @@ class Program
                 return new TokenString(a, 0, 0, 0, 0);
             };
 
+        Func<List<Token>, object> strFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenString(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
+
+        Func<List<Token>, object> intFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenInt(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
+
+        Func<List<Token>, object> floatFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenFloat(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
 
         Interpreter.Run(parsed.Item2, new(), new() {
             {
@@ -70,6 +94,16 @@ class Program
                 )
             },
             {
+                "printtoken",
+                (
+                    new() {
+                        ("message", Types.String)
+                    },
+                    printTokenFunc,
+                    null
+                )
+            },
+            {
                 "input",
                 (
                     new() {
@@ -77,6 +111,36 @@ class Program
                     },
                     inputFunc,
                     Types.String
+                )
+            },
+            {
+                "str",
+                (
+                    new() {
+                        ("to", Types.String)
+                    },
+                    strFunc,
+                    Types.String
+                )
+            },
+            {
+                "int",
+                (
+                    new() {
+                        ("to", Types.String)
+                    },
+                    intFunc,
+                    Types.Int
+                )
+            },
+            {
+                "float",
+                (
+                    new() {
+                        ("to", Types.String)
+                    },
+                    floatFunc,
+                    Types.Float
                 )
             }
         });
