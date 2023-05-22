@@ -202,6 +202,9 @@ public static class Parser
                     tokens = newtokens.ToList();
                     ast.Add(newast);
                 }
+            } else 
+            {
+                Error.Throw("Unexpected token", token);
             }
         }
 
