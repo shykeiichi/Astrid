@@ -23,7 +23,7 @@ public static class Error
 
 
 
-        if(token.lineStart > 0) {
+        if((token!).lineStart > 0) {
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.Write(token.lineStart);
             Console.Write(" | ");

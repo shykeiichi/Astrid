@@ -1,10 +1,14 @@
 add :: (a: int, b: int) int {
     print(message: "Adding" + "test");
+    print(message: "a");
+    print(message: a);
+    print(message: "b");
+    print(message: b);
     return a + b;
 }
 
 val1: int = 2 + 2;
-val: int = add(a: 1, b: val1 + 1) + 1;
+val: int = add(b: 1, a: val1 + 1) + 1;
 val += 1;
 
 if val1 == 4 {
