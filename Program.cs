@@ -41,7 +41,25 @@ class Program
 
         // Console.WriteLine("Run: =======================");
         
-        Interpreter.Run(parsed.Item2, new(), new());
+        Func<List<Token>, object> printFunc = 
+            (List<Token> parameters) => 
+            {
+                Console.WriteLine(parameters[0].value);
+                return null!;
+            };
+
+        Interpreter.Run(parsed.Item2, new(), new() {
+            {
+                "print",
+                (
+                    new() {
+                        ("message", Types.String)
+                    },
+                    printFunc,
+                    Types.String
+                )
+            }
+        });
     }
 
     static void PrintAST(List<AST> a)
@@ -67,6 +85,7 @@ class Program
                 var call = ((ASTVariableReassign)d);
                 Console.WriteLine("Variable Reassgin:");
                 Console.WriteLine(" Label: " + call.label);
+                Console.WriteLine(" Assign: " + call.asop);
                 Console.Write(" Value: ");
                 call.value.expression.ForEach(e => {
                     if(e.GetType() != typeof(ASTFunctionCall))

@@ -67,16 +67,18 @@ public static class Error
         Console.WriteLine();
 
 
+        if(filearr.Length < token.lineStart + 1)
+        {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.Write(token.lineStart + 2);
+            Console.Write(" | ");
 
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.Write(token.lineStart + 2);
-        Console.Write(" | ");
-
-        foreach(var j in filearr[token.lineStart + 1]) {
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(j);
+            foreach(var j in filearr[token.lineStart + 1]) {
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.Write(j);
+            }
+            Console.WriteLine();
         }
-        Console.WriteLine();
 
         Environment.Exit(1);
     }

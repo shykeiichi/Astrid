@@ -314,7 +314,7 @@ public static class Parser
                 Error.Throw("Expected type", token);
             }
 
-            Console.WriteLine("i");
+            // Console.WriteLine("i");
             parameters.Add((parameterLabel, GetTypeFromToken(type)));
 
             if(token.GetType() == typeof(TokenParenEnd))
@@ -339,7 +339,7 @@ public static class Parser
         Types returnType = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
         {   
-            Console.WriteLine("2");
+            // Console.WriteLine("2");
             returnType = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
@@ -397,14 +397,22 @@ public static class Parser
             }
 
             var (newtokens, newast) = ParseExpression(tokens.ToArray());
-            tokens = newtokens.ToList();
+            // Console.WriteLine(tokens[tokens.Count - newtokens.Length - 1]);
+
+            var newtok = newtokens.ToList();
+            newtok = newtok.Prepend(tokens[tokens.Count - newtokens.Length - 1]).ToList();
+            tokens = newtok.ToArray().ToList();
             token = tokens[0];
 
             parameters.Add(parameterLabel, newast);
 
             if(token.GetType() == typeof(TokenParenEnd) || token.GetType() == typeof(TokenEOL))
             {
+                tokens = tokens.Skip(1).ToList();
                 return (tokens.ToArray(), new ASTFunctionCall(function, parameters));
+            } else if(token.GetType() == typeof(TokenComma))
+            {
+                tokens = tokens.Skip(1).ToList();
             }
         }
         return (tokens.ToArray(), new ASTFunctionCall(function, parameters));
@@ -427,7 +435,7 @@ public static class Parser
         Types type = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
         {
-            Console.WriteLine("3");
+            // Console.WriteLine("3");
             type = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
@@ -483,9 +491,8 @@ public static class Parser
         var token = tokens[0];
 
         var (newtokens, expr) = ParseExpression(tokens.ToArray());
-        tokens = newtokens.ToList();
 
-        return (tokens.ToArray(), new ASTVariableReassign(label, expr, asop));
+        return (newtokens, new ASTVariableReassign(label, expr, asop));
     }
 
     public static Type[] ExprValues = new [] {typeof(TokenInt), typeof(TokenFloat), typeof(TokenString), typeof(TokenIdentifier)};
@@ -524,14 +531,26 @@ public static class Parser
         List<Token> OperatorQueue = new();
         List<object> OutputQueue = new();
 
+        int leftParens = 0;
+        int rightParens = 0;
+
         while(tokens.Count > 0)
         {
             var token = tokens[0];
             tokens = tokens.Skip(1).ToList();
 
+            if(token.GetType() == typeof(TokenParenStart))
+            {
+                leftParens ++;
+            } 
+            if(token.GetType() == typeof(TokenParenEnd))
+            {
+                rightParens++;
+            }
+
             // Console.WriteLine("expr " + Tokenizer.GetTokenAsHuman(token));
 
-            if(new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(token.GetType()) || (new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(tokens[0].GetType()) && new [] {typeof(TokenParenEnd)}.Contains(token.GetType())))
+            if(new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(token.GetType()) || (new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(tokens[0].GetType()) && new [] {typeof(TokenParenEnd)}.Contains(token.GetType())) || (rightParens > leftParens))
             {
                 while(OperatorQueue.Count > 0)
                 {
@@ -556,6 +575,8 @@ public static class Parser
                         var (newtokens, newast) = ParseFunctionCall(tokens.ToArray(), token.value);
                         tokens = newtokens.ToList();
                         OutputQueue.Add(newast);
+                        // Console.Write("Parsed fc ");
+                        // Tokenizer.Print(tokens[0]);
                         // Console.WriteLine("done parse");
                     } else {
                         OutputQueue.Add(token);
@@ -597,8 +618,8 @@ public static class Parser
                     OperatorQueue.RemoveAt(OperatorQueue.Count - 1);
                 }
 
-                if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
-                    Error.Throw("Expected left parnthesis", OperatorQueue.Last());
+                // if(OperatorQueue.Last().GetType() == typeof(TokenParenStart))
+                //     Error.Throw("Expected left parnthesis", OperatorQueue.Last());
 
                 OperatorQueue.RemoveAt(OperatorQueue.Count - 1);                
             }

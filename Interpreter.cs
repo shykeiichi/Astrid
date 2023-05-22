@@ -88,15 +88,111 @@ public static class Interpreter
                 addedVars.Add(call.label);
             } else if(ast is ASTVariableReassign call)
             {
-                if(!Variables.ContainsKey(call.label))
-                    Error.Throw("No variable exists", default(Token)!);
+                var value = RunExpression(call.value, Variables, Functions);
+                Types type = Types.Int;
 
-                var result = RunExpression(call.value, Variables, Functions);
+                // Console.WriteLine("reached as");
 
-                if(Variables[call.label].Item1 != Parser.GetTypeFromValue(result))
-                    Error.Throw($"Types don't match {Variables[call.label].Item1} {Parser.GetTypeFromValue(result)}", result);
+                if(!Variables.Keys.Contains(call.label))
+                    throw new Exception($"Variable {call.label} doens't exist so it can't be reassigned");
 
-                Variables[call.label] = (Variables[call.label].Item1, result);    
+                switch(Variables[call.label].Item1)
+                {
+                    case Types.Int:
+                        if(value.GetType() != typeof(TokenInt))
+                            Error.Throw($"Cannot assign ${value.GetType()} to int", value);
+                        type = Types.Int;
+                        break;
+                    case Types.Float:
+                        if(value.GetType() != typeof(TokenFloat))
+                            Error.Throw($"Cannot assign ${value.GetType()} to float", value);
+                        type = Types.Float;
+                        break;
+                    case Types.String:
+                        if(value.GetType() != typeof(TokenString))
+                            Error.Throw($"Cannot assign ${value.GetType()} to string", value);
+                        type = Types.String;
+                        break;
+                    default:
+                        Error.Throw($"Invalid type in reassign {Variables[call.label].Item1}", Variables[call.label].Item2); break;
+                }
+
+                switch(call.asop)
+                {
+                    case AssignOp.Assign: {
+                        Variables[call.label] = (type, value);
+                    } break;
+                    case AssignOp.Plus: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) + int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) + float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.String: {
+                                Variables[call.label] = (type, new TokenString(Variables[call.label].Item2.value + value.value, value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                        }
+                    } break;
+                    case AssignOp.Minus: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) - int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) - float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                Error.Throw($"Can't use operator minus with {type}", Variables[call.label].Item2); 
+                            } break;
+                        }
+                    } break;
+                    case AssignOp.Multiply: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) * int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) * float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                Error.Throw($"Can't use operator multiply with {type}", Variables[call.label].Item2); 
+                            } break;
+                        }
+                    } break;
+                    case AssignOp.Divide: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) / int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) / float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                Error.Throw($"Can't use operator divide with {type}", Variables[call.label].Item2); 
+                            } break;
+                        }
+                    } break;
+                    case AssignOp.Power: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt(Math.Pow(int.Parse(Variables[call.label].Item2.value), int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat(Math.Pow(float.Parse(Variables[call.label].Item2.value), float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                Error.Throw($"Can't use operator power with {type}", Variables[call.label].Item2); 
+                            } break;
+                        }
+                    } break;
+                }
             }
         }
 
@@ -138,19 +234,23 @@ public static class Interpreter
 
         // Functions[fc.label]
 
-        string[] preAdd = fc.value.Keys.ToArray();
+        if(Functions[fc.label].Item2 is List<AST> block) 
+        {
+            string[] preAdd = fc.value.Keys.ToArray();
 
-        fc.value.ToList().ForEach(e => {
-            var Tok = RunExpression(e.Value, Variables, Functions);
-            Variables.Add(e.Key, (Parser.GetTypeFromToken(Tok), Tok));
-        });
-
-        if(Functions[fc.label].Item2 is List<AST> block)
+            fc.value.ToList().ForEach(e => {
+                var Tok = RunExpression(e.Value, Variables, Functions);
+                Variables.Add(e.Key, (Parser.GetTypeFromValue(Tok), Tok));
+            });
             return Run(block, Variables, Functions, preAdd);
-        else 
+        } else 
         {
             var asd = (dynamic message) => {};
-            return ((dynamic)Functions[fc.label].Item2).Invoke();
+
+            List<Token> parameters = fc.value.Select(e => RunExpression(e.Value, Variables, Functions)).ToList();
+
+            var val = ((dynamic)Functions[fc.label].Item2).Invoke(parameters);
+            return val;
         }
     }
 
@@ -168,6 +268,7 @@ public static class Interpreter
                 tokens.Add((Token)tok);
             } else 
             {
+                // Console.WriteLine("func call");
                 var val = RunFunction((ASTFunctionCall)tok, Variables, Functions);
                 if(val == null)
                     Error.Throw(((ASTFunctionCall)tok).label, default(Token)!);
@@ -175,6 +276,11 @@ public static class Interpreter
                 tokens.Add(val!);
             }
         }
+
+        // foreach(var i in tokens)
+        // {
+        //     Console.WriteLine("tok " + Tokenizer.GetTokenAsHuman(i));
+        // }
 
         List<Token> stack = new();
         var token = tokens[0];
