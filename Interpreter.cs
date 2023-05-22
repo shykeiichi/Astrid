@@ -295,7 +295,7 @@ public static class Interpreter
                     Error.Throw($"Return type must be {Functions[((ASTFunctionCall)tok).label].Item3}", new(0, 0, 0, 0));
                 } else if(Parser.GetTypeFromValue(val!) != Functions[((ASTFunctionCall)tok).label].Item3)
                 {
-                    Error.Throw($"Return type must be {Functions[((ASTFunctionCall)tok).label].Item3}", val);
+                    Error.Throw($"Return type must be {Functions[((ASTFunctionCall)tok).label].Item3}", val!);
                 }
                 if(val == null)
                     Error.Throw(((ASTFunctionCall)tok).label, default(Token)!);
