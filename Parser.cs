@@ -126,7 +126,8 @@ public enum AssignOp
     Minus,
     Divide,
     Multiply,
-    Power
+    Power,
+    Modulo
 }
 
 public static class Parser
@@ -173,7 +174,7 @@ public static class Parser
                     var (newtokens, newast) = ParseVariableDefine(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
                     ast.Add(newast);   
-                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignDivide), typeof(TokenAssignMinus), typeof(TokenAssignMultiply), typeof(TokenAssignPlus), typeof(TokenAssignPower)}.Contains(token.GetType()))
+                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignDivide), typeof(TokenAssignMinus), typeof(TokenAssignMultiply), typeof(TokenAssignPlus), typeof(TokenAssignPower), typeof(TokenAssignModulo)}.Contains(token.GetType()))
                 {
                     tokens = tokens.Skip(1).ToList();
                     var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, token);
@@ -481,7 +482,10 @@ public static class Parser
         } else if(op.GetType() == typeof(TokenAssignPower))
         {
             asop = AssignOp.Power;
-        } else 
+        } else if(op.GetType() == typeof(TokenAssignModulo))
+        {
+            asop = AssignOp.Power;
+        }  else 
         {
             Error.Throw("Invalid operator", op);
         }
@@ -513,7 +517,8 @@ public static class Parser
         {typeof(TokenMinus), (2, false)},
         {typeof(TokenDivide), (3, false)},
         {typeof(TokenMultiply), (3, false)},
-        {typeof(TokenPower), (4, false)},
+        {typeof(TokenModulo), (3, false)},
+        {typeof(TokenPower), (4, true)},
     };
 
     public static Dictionary<Type, (int, bool)> ExprOperatorsBoolean = new()

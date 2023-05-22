@@ -192,6 +192,20 @@ public static class Interpreter
                             } break;
                         }
                     } break;
+                    case AssignOp.Modulo: {
+                        switch(type)
+                        {
+                            case Types.Int: {
+                                Variables[call.label] = (type, new TokenInt((int.Parse(Variables[call.label].Item2.value) % int.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            case Types.Float: {
+                                Variables[call.label] = (type, new TokenFloat((float.Parse(Variables[call.label].Item2.value) % float.Parse(value.value)).ToString(), value.lineStart, value.lineEnd, value.charStart, value.charEnd));
+                            } break;
+                            default: {
+                                Error.Throw($"Can't use operator modulo with {type}", Variables[call.label].Item2); 
+                            } break;
+                        }
+                    } break;
                 }
             }
         }
@@ -259,6 +273,12 @@ public static class Interpreter
     {
         List<object> tokensOld = _expr.expression;
 
+        // Console.WriteLine("a");
+        // foreach(var i in tokensOld)
+        // {
+        //     Console.WriteLine(i);
+        // }
+
         List<Token> tokens = new();
 
         foreach(var tok in tokensOld)
@@ -302,8 +322,7 @@ public static class Interpreter
                 }
             } else if(Parser.ExprOperators.Keys.Contains(token.GetType()))
             {
-                if(new [] {typeof(TokenEquals), typeof(TokenNotEquals), typeof(TokenGreater), typeof(TokenGreaterEquals), typeof(TokenLesser), typeof(TokenLesserEquals)}.Contains(token.GetType()))
-                {
+                if(new [] {typeof(TokenEquals), typeof(TokenNotEquals), typeof(TokenGreater), typeof(TokenGreaterEquals), typeof(TokenLesser), typeof(TokenLesserEquals)}.Contains(token.GetType()))                {
                     if(stack.Count < 2)
                         throw new Exception("Stack doesn't contains two values");
                     
@@ -344,7 +363,7 @@ public static class Interpreter
 
                             value = (float.Parse(left.value) <= float.Parse(right.value)).ToString().ToLower();
                         }
-
+                        
                         stack.Add(new TokenBoolean(value, left.lineStart, left.lineEnd, left.charStart, left.charEnd));
                         stack.RemoveAt(stack.Count - 2);
                         stack.RemoveAt(stack.Count - 2);
@@ -385,6 +404,10 @@ public static class Interpreter
                         {
                             // Console.WriteLine($"{int.Parse(left.value)} ^ {int.Parse(right.value)}");
                             value = ((int)Math.Pow(int.Parse(left.value), int.Parse(right.value))).ToString().ToLower();
+                        } else if(token.GetType() == typeof(TokenModulo))
+                        {
+                            // Console.WriteLine($"{int.Parse(left.value)} ^ {int.Parse(right.value)}");
+                            value = (int.Parse(left.value) % int.Parse(right.value)).ToString().ToLower();
                         }
 
                         // Console.WriteLine("final value: " + value);
@@ -415,7 +438,11 @@ public static class Interpreter
                         {
                             // Console.WriteLine($"{int.Parse(left.value)} ^ {int.Parse(right.value)}");
                             value = ((float)Math.Pow(float.Parse(left.value), float.Parse(right.value))).ToString().ToLower();
-                        }
+                        } else if(token.GetType() == typeof(TokenModulo))
+                        {
+                            // Console.WriteLine($"{int.Parse(left.value)} * {int.Parse(right.value)}");
+                            value = (float.Parse(left.value) % float.Parse(right.value)).ToString().ToLower();
+                        } 
 
                         // Console.WriteLine("final value: " + value);
                         stack.Add(new TokenFloat(value, left.lineStart, left.lineEnd, left.charStart, left.charEnd));
@@ -448,7 +475,9 @@ public static class Interpreter
 
         if(stack.Count > 1)
         {
-            Error.Throw("Stack exited longer than 1", token);
+            string st = "Stack exited longer than 1 ";
+            stack.ForEach(e => st += Tokenizer.GetTokenAsHuman(e));
+            Error.Throw(st, token);
         }
 
         return stack[0];
