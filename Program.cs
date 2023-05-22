@@ -49,6 +49,15 @@ class Program
                 return null!;
             };
 
+        Func<List<Token>, object> inputFunc = 
+            (List<Token> parameters) => 
+            {
+                Console.Write(parameters[0].value);
+                string a = Console.ReadLine()!;
+                return new TokenString(a, 0, 0, 0, 0);
+            };
+
+
         Interpreter.Run(parsed.Item2, new(), new() {
             {
                 "print",
@@ -57,6 +66,16 @@ class Program
                         ("message", Types.String)
                     },
                     printFunc,
+                    null
+                )
+            },
+            {
+                "input",
+                (
+                    new() {
+                        ("message", Types.String)
+                    },
+                    inputFunc,
                     Types.String
                 )
             }

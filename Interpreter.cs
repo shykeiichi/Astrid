@@ -242,7 +242,7 @@ public static class Interpreter
             });
             if(!contains)
             {
-                Error.Throw($"Variable {i.Key} isn't satisifed", new(0, 0, 0, 0));
+                Error.Throw($"Parameter {i.Key} isn't satisifed", new(0, 0, 0, 0));
             }
         }
 
@@ -262,6 +262,11 @@ public static class Interpreter
             var asd = (dynamic message) => {};
 
             List<Token> parameters = fc.value.Select(e => RunExpression(e.Value, Variables, Functions)).ToList();
+
+            if(parameters.Count < Functions[fc.label].Item1.Count)
+            {
+                Error.Throw($"Parameters aren't satisifed in {fc.label}", new(0, 0, 0, 0));
+            }
 
             var val = ((dynamic)Functions[fc.label].Item2).Invoke(parameters);
             return val;
