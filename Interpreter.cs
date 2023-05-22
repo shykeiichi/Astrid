@@ -2,7 +2,7 @@ namespace Astrid;
 
 public static class Interpreter
 {
-    public static Token? Run(List<AST> block, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions, string[] preAddedVars = null!, string[] preAddedFuncs = null!)
+    public static Token? Run(List<AST> block, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types?)> Functions, string[] preAddedVars = null!, string[] preAddedFuncs = null!)
     {
         List<string> addedVars = new();
         if(preAddedVars != null)
@@ -223,7 +223,7 @@ public static class Interpreter
         return null;
     }
 
-    public static Token? RunFunction(ASTFunctionCall fc, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions)
+    public static Token? RunFunction(ASTFunctionCall fc, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types?)> Functions)
     {
         if(!Functions.Keys.Contains(fc.label))
         {
@@ -269,7 +269,7 @@ public static class Interpreter
     }
 
 
-    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions)
+    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types?)> Functions)
     {
         List<object> tokensOld = _expr.expression;
 
@@ -290,6 +290,13 @@ public static class Interpreter
             {
                 // Console.WriteLine("func call");
                 var val = RunFunction((ASTFunctionCall)tok, Variables, Functions);
+                if(val == null && Functions[((ASTFunctionCall)tok).label].Item3 != null)
+                {
+                    Error.Throw($"Return type must be {Functions[((ASTFunctionCall)tok).label].Item3}", new(0, 0, 0, 0));
+                } else if(Parser.GetTypeFromValue(val!) != Functions[((ASTFunctionCall)tok).label].Item3)
+                {
+                    Error.Throw($"Return type must be {Functions[((ASTFunctionCall)tok).label].Item3}", val);
+                }
                 if(val == null)
                     Error.Throw(((ASTFunctionCall)tok).label, default(Token)!);
                 

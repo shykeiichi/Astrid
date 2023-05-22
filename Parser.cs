@@ -49,10 +49,10 @@ public class ASTFunctionDefine : AST
 {
     public string label;
     public List<(string, Types)> parameters;
-    public Types returnType;
+    public Types? returnType;
     public List<AST> block;
 
-    public ASTFunctionDefine(string label, List<(string, Types)> parameters, Types returnType, List<AST> block)
+    public ASTFunctionDefine(string label, List<(string, Types)> parameters, Types? returnType, List<AST> block)
     {
         this.label = label;
         this.parameters = parameters;
@@ -340,11 +340,17 @@ public static class Parser
             }
         }
 
-        Types returnType = Types.Int;
+        Types? returnType = null;
         if(token.GetType() == typeof(TokenIdentifier))
         {   
+            if(token.value == "void")
+            {
+                returnType = null;
+            } else 
+            {
+                returnType = GetTypeFromToken(token);
+            }
             // Console.WriteLine("2");
-            returnType = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
         } else {
