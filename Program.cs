@@ -117,7 +117,7 @@ class Program
                 "str",
                 (
                     new() {
-                        ("to", Types.String)
+                        ("from", Types.String)
                     },
                     strFunc,
                     Types.String
@@ -127,7 +127,7 @@ class Program
                 "int",
                 (
                     new() {
-                        ("to", Types.String)
+                        ("from", Types.String)
                     },
                     intFunc,
                     Types.Int
@@ -137,7 +137,7 @@ class Program
                 "float",
                 (
                     new() {
-                        ("to", Types.String)
+                        ("from", Types.String)
                     },
                     floatFunc,
                     Types.Float
