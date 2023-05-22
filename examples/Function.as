@@ -5,6 +5,7 @@ add :: (a: int, b: int) int {
 
 val1: int = 2 + 2;
 val: int = add(a: 1, b: val1 + 1);
+val += 1;
 
 if val1 == 4 {
     print(message: "val1 = 4");

@@ -173,6 +173,12 @@ public static class Parser
                     var (newtokens, newast) = ParseVariableDefine(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
                     ast.Add(newast);   
+                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignDivide), typeof(TokenAssignMinus), typeof(TokenAssignMultiply), typeof(TokenAssignPlus), typeof(TokenAssignPower)}.Contains(token.GetType()))
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, token);
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);   
                 }
             } else if(token.GetType() == typeof(TokenKeyword))
             {
@@ -184,7 +190,16 @@ public static class Parser
                     ast.Add(newast);
                 } else if(token.value == "if")
                 {
-                    
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseConditional(tokens.ToArray());
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
+                } else if(token.value == "while")
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseWhile(tokens.ToArray());
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
                 }
             }
         }
@@ -201,6 +216,34 @@ public static class Parser
             case "string": return Types.String;
             default: Error.Throw($"Invalid type", t); return Types.Int;
         }
+    }
+
+    public static (Token[], AST) ParseConditional(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+        AST ast = new();
+
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        (newtokens, var astblock) = ParseBlock(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        return (tokens.ToArray(), new ASTConditional(expr, astblock));   
+    }
+
+    public static (Token[], AST) ParseWhile(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+        AST ast = new();
+
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        (newtokens, var astblock) = ParseBlock(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        return (tokens.ToArray(), new ASTWhile(expr, astblock));   
     }
 
     public static (Token[], AST) ParseFunctionDefine(Token[] tokens_, string label)
@@ -388,6 +431,42 @@ public static class Parser
         tokens = newtokens.ToList();
 
         return (tokens.ToArray(), new ASTVariableDefine(label, type, expr)); 
+    }
+
+    public static (Token[], AST) ParseVariableReassign(Token[] tokens_, string label, Token op) 
+    {
+        AssignOp asop = AssignOp.Assign;
+        if(op.GetType() == typeof(TokenAssign))
+        {
+            asop = AssignOp.Assign;
+        } else if(op.GetType() == typeof(TokenAssignDivide))
+        {
+            asop = AssignOp.Divide;
+        } else if(op.GetType() == typeof(TokenAssignMinus))
+        {
+            asop = AssignOp.Minus;
+        } else if(op.GetType() == typeof(TokenAssignMultiply))
+        {
+            asop = AssignOp.Multiply;
+        } else if(op.GetType() == typeof(TokenAssignPlus))
+        {
+            asop = AssignOp.Plus;
+        } else if(op.GetType() == typeof(TokenAssignPower))
+        {
+            asop = AssignOp.Power;
+        } else 
+        {
+            Error.Throw("Invalid operator", op);
+        }
+
+        List<Token> tokens = tokens_.ToList();
+
+        var token = tokens[0];
+
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        return (tokens.ToArray(), new ASTVariableReassign(label, expr, asop));
     }
 
     public static Type[] ExprValues = new [] {typeof(TokenInt), typeof(TokenFloat), typeof(TokenString), typeof(TokenIdentifier)};

@@ -62,6 +62,19 @@ class Program
                         PrintFunctionCall((ASTFunctionCall)e);
                 });
                 Console.WriteLine();
+            } else if(d.GetType() == typeof(ASTVariableReassign))
+            {
+                var call = ((ASTVariableReassign)d);
+                Console.WriteLine("Variable Reassgin:");
+                Console.WriteLine(" Label: " + call.label);
+                Console.Write(" Value: ");
+                call.value.expression.ForEach(e => {
+                    if(e.GetType() != typeof(ASTFunctionCall))
+                        Console.Write(((dynamic)e).value + " ");
+                    else
+                        PrintFunctionCall((ASTFunctionCall)e);
+                });
+                Console.WriteLine();
             } else if(d.GetType() == typeof(ASTFunctionCall))
             {
                 var call = ((ASTFunctionCall)d);
@@ -70,8 +83,30 @@ class Program
             {
                 var call = ((ASTConditional)d);
                 Console.WriteLine("Conditional:");
-                Console.WriteLine(" Condition: " + call.condition);
+                Console.Write(" Condition: ");
+                call.condition.expression.ForEach(e => {
+                    if(e.GetType() != typeof(ASTFunctionCall))
+                        Console.Write(((dynamic)e).value + " ");
+                    else
+                        PrintFunctionCall((ASTFunctionCall)e);
+                });
+                Console.WriteLine("{");
                 PrintAST(call.block);
+                Console.WriteLine("}");
+            } else if(d.GetType() == typeof(ASTWhile))
+            {
+                var call = ((ASTWhile)d);
+                Console.WriteLine("While:");
+                Console.Write(" Condition: ");
+                call.condition.expression.ForEach(e => {
+                    if(e.GetType() != typeof(ASTFunctionCall))
+                        Console.Write(((dynamic)e).value + " ");
+                    else
+                        PrintFunctionCall((ASTFunctionCall)e);
+                });
+                Console.WriteLine("{");
+                PrintAST(call.block);
+                Console.WriteLine("}");
             } else if(d.GetType() == typeof(ASTFunctionDefine))
             {
                 var call = ((ASTFunctionDefine)d);
