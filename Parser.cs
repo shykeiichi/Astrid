@@ -289,6 +289,14 @@ public static class Parser
         {
             token = tokens[0];
 
+            if(token.GetType() == typeof(TokenParenEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+                parametersDone = true;
+                break;
+            }
+
             var parameterLabel = "";
             if(token.GetType() == typeof(TokenIdentifier))
             {   
@@ -386,6 +394,14 @@ public static class Parser
         while(tokens.Count > 0 || !parametersDone)
         {
             var token = tokens[0];
+
+            if(token.GetType() == typeof(TokenParenEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+                parametersDone = true;
+                break;
+            }
 
             var parameterLabel = "";
             if(token.GetType() == typeof(TokenIdentifier))
