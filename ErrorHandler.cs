@@ -6,11 +6,14 @@ public static class Error
     {
         string[] filearr = File.ReadAllLines(Program.sourceFile);
 
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.Write("token");
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.Write($": {Tokenizer.GetTokenAsHuman(token)}");
-        Console.WriteLine();
+        if(token != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write("token");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write($": {Tokenizer.GetTokenAsHuman(token)}");
+            Console.WriteLine();
+        }
 
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("error");

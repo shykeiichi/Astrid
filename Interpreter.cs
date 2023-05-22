@@ -2,10 +2,15 @@ namespace Astrid;
 
 public static class Interpreter
 {
-    public static Token? Run(List<AST> block, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, List<AST>, Types)> Functions, string[] preAddedVars = default(string[])!)
+    public static Token? Run(List<AST> block, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions, string[] preAddedVars = null!, string[] preAddedFuncs = null!)
     {
         List<string> addedVars = new();
-        addedVars.AddRange(preAddedVars.ToList());
+        if(preAddedVars != null)
+            addedVars.AddRange(preAddedVars.ToList());
+
+        List<string> addedFuncs = new();
+        if(preAddedFuncs != null)
+            addedFuncs.AddRange(preAddedFuncs.ToList());
 
         foreach(var ast in block)
         {
@@ -56,7 +61,42 @@ public static class Interpreter
                 }
             } else if(ast.GetType() == typeof(ASTFunctionCall))
             {
+                var call = (ASTFunctionCall)ast;
+                
+                RunFunction(call, Variables, Functions);
+            } else if(ast.GetType() == typeof(ASTFunctionDefine))
+            {
+                var call = (ASTFunctionDefine)ast;
 
+                addedFuncs.Add(call.label);
+
+                Functions.Add(call.label, (
+                    call.parameters,
+                    call.block,
+                    call.returnType
+                ));
+            } else if(ast.GetType() == typeof(ASTReturn))
+            {
+                var call = (ASTReturn)ast;
+
+                return RunExpression(call.expression, Variables, Functions);
+            } else if(ast.GetType() == typeof(ASTVariableDefine))
+            {
+                var call = (ASTVariableDefine)ast;
+
+                Variables.Add(call.label, (call.type, RunExpression(call.value, Variables, Functions)));
+                addedVars.Add(call.label);
+            } else if(ast is ASTVariableReassign call)
+            {
+                if(!Variables.ContainsKey(call.label))
+                    Error.Throw("No variable exists", default(Token)!);
+
+                var result = RunExpression(call.value, Variables, Functions);
+
+                if(Variables[call.label].Item1 != Parser.GetTypeFromValue(result))
+                    Error.Throw($"Types don't match {Variables[call.label].Item1} {Parser.GetTypeFromValue(result)}", result);
+
+                Variables[call.label] = (Variables[call.label].Item1, result);    
             }
         }
 
@@ -65,33 +105,57 @@ public static class Interpreter
             Variables.Remove(d);
         }
 
+        foreach(var d in addedFuncs)
+        {
+            Functions.Remove(d);
+        }
+
         return null;
     }
 
-    public static Token RunFunction(ASTFunctionCall fc, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, List<AST>, Types)> Functions)
+    public static Token? RunFunction(ASTFunctionCall fc, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions)
     {
         if(!Functions.Keys.Contains(fc.label))
         {
-            Error.Throw("Function doesn't exist", default(Token)!);
+            Error.Throw("Function doesn't exist", new(0, 0, 0, 0));
         }
+
+        // fc.value.ToList().ForEach(e => Console.WriteLine(e.Key));
+        // Functions[fc.label].Item1.ForEach(e => Console.WriteLine(e.Item1));
 
         foreach(var i in fc.value)
         {
             bool contains = false;
-            Functions[fc.label].Item1.ForEach(e => contains = e.Item1 == i.Key);
+            Functions[fc.label].Item1.ForEach(e => {
+                if(!contains)
+                    contains = e.Item1 == i.Key;
+            });
             if(!contains)
             {
-                Error.Throw($"Variable {i.Key} isn't satisifed", default(Token)!);
+                Error.Throw($"Variable {i.Key} isn't satisifed", new(0, 0, 0, 0));
             }
         }
 
         // Functions[fc.label]
 
-        Run(Functions[fc.label].Item2, Variables, Functions);
+        string[] preAdd = fc.value.Keys.ToArray();
+
+        fc.value.ToList().ForEach(e => {
+            var Tok = RunExpression(e.Value, Variables, Functions);
+            Variables.Add(e.Key, (Parser.GetTypeFromToken(Tok), Tok));
+        });
+
+        if(Functions[fc.label].Item2 is List<AST> block)
+            return Run(block, Variables, Functions, preAdd);
+        else 
+        {
+            var asd = (dynamic message) => {};
+            return ((dynamic)Functions[fc.label].Item2).Invoke();
+        }
     }
 
 
-    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, List<AST>, Types)> Functions)
+    public static Token RunExpression(ASTExpression _expr, Dictionary<string, (Types, Token)> Variables, Dictionary<string, (List<(string, Types)>, object, Types)> Functions)
     {
         List<object> tokensOld = _expr.expression;
 
@@ -104,7 +168,11 @@ public static class Interpreter
                 tokens.Add((Token)tok);
             } else 
             {
-                RunFunction((ASTFunctionCall)tok, Variables, Functions);
+                var val = RunFunction((ASTFunctionCall)tok, Variables, Functions);
+                if(val == null)
+                    Error.Throw(((ASTFunctionCall)tok).label, default(Token)!);
+                
+                tokens.Add(val!);
             }
         }
 
@@ -124,7 +192,7 @@ public static class Interpreter
                     stack.Add(token);
                 else {
                     // Console.WriteLine("Id " + token.value + " to " + Tokenizer.GetTokenAsHuman(variables[token.value]));
-                    stack.Add(variables[token.value].Item2);
+                    stack.Add(Variables[token.value].Item2);
                 }
             } else if(Parser.ExprOperators.Keys.Contains(token.GetType()))
             {

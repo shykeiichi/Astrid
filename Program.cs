@@ -37,11 +37,11 @@ class Program
 
         var parsed = Parser.ParseBlock(tokens);
 
-        PrintAST(parsed.Item2);
+        // PrintAST(parsed.Item2);
 
         // Console.WriteLine("Run: =======================");
         
-        // Interpreter.Run(parsed.Item2, new());
+        Interpreter.Run(parsed.Item2, new(), new());
     }
 
     static void PrintAST(List<AST> a)

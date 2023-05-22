@@ -140,7 +140,7 @@ public static class Parser
         {
             var token = tokens[0];
 
-            Tokenizer.Print(token);
+            // Tokenizer.Print(token);
 
             if(token.GetType() == typeof(TokenEOL))
             {
@@ -216,6 +216,22 @@ public static class Parser
             case "string": return Types.String;
             default: Error.Throw($"Invalid type", t); return Types.Int;
         }
+    }
+
+    public static Types GetTypeFromValue(Token t)
+    {
+        if(t.GetType() == typeof(TokenInt))
+        {
+            return Types.Int;
+        } else if(t.GetType() == typeof(TokenFloat))
+        {
+            return Types.Float;
+        } else if(t.GetType() == typeof(TokenString))
+        {
+            return Types.String;
+        } 
+        Error.Throw($"Invalid type", t); 
+        return Types.Int;
     }
 
     public static (Token[], AST) ParseConditional(Token[] tokens_)
@@ -298,6 +314,7 @@ public static class Parser
                 Error.Throw("Expected type", token);
             }
 
+            Console.WriteLine("i");
             parameters.Add((parameterLabel, GetTypeFromToken(type)));
 
             if(token.GetType() == typeof(TokenParenEnd))
@@ -322,6 +339,7 @@ public static class Parser
         Types returnType = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
         {   
+            Console.WriteLine("2");
             returnType = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
@@ -409,6 +427,7 @@ public static class Parser
         Types type = Types.Int;
         if(token.GetType() == typeof(TokenIdentifier))
         {
+            Console.WriteLine("3");
             type = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
