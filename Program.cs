@@ -6,6 +6,7 @@ class Program
 
     static void Main(string[] args)
     {
+        var now = DateTime.Now;
         foreach(var kvp in Parser.ExprOperatorsEquality)
         {
             Parser.ExprOperators.Add(kvp.Key, kvp.Value);
@@ -60,6 +61,8 @@ class Program
                 )
             }
         });
+
+        // Console.WriteLine($"Time elapsed: {DateTime.Now.Subtract(now).TotalSeconds}");
     }
 
     static void PrintAST(List<AST> a)

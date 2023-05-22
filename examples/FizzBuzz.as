@@ -18,5 +18,5 @@ while val < 100
     {
         print(message: fb);
     }
-    val = val + 1;
+    val += 1;
 }
