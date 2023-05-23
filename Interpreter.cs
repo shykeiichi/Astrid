@@ -240,10 +240,10 @@ public static class Interpreter
                 if(!contains)
                     contains = e.Item1 == i.Key;
             });
-            if(!contains)
-            {
-                Error.Throw($"Parameter {i.Key} isn't satisifed", new(0, 0, 0, 0));
-            }
+            // if(!contains)
+            // {
+            //     Error.Throw($"Parameter {i.Key} isn't satisifed", new(0, 0, 0, 0));
+            // }
         }
 
         // Functions[fc.label]
