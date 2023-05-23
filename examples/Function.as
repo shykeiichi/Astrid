@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 add :: (a: int, b: int) int {
     print(message: "Adding" + "test");
     print(message: "a");
@@ -24,3 +25,11 @@ while val1 > 0 {
 }
 
 print(message: val + 1);
+=======
+add :: (a: int, b: int) int 
+{
+    return a + b;
+}
+
+print(message: add(a: 1, b: 2));
+>>>>>>> fcebca8a7c3a6a29ba0baad502b7f76957a360bd

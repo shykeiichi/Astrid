@@ -120,6 +120,14 @@ internal class TokenAssignPower : Token
     }
 }
 
+internal class TokenAssignModulo : Token
+{
+    public TokenAssignModulo(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "%=";
+    }
+}
+
 internal class TokenComma : Token
 {
     public TokenComma(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
@@ -245,6 +253,14 @@ internal class TokenPower : Token
     public TokenPower(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
     {
         this.value = "^";
+    }
+}
+
+internal class TokenModulo : Token
+{
+    public TokenModulo(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
+    {
+        this.value = "%";
     }
 }
 

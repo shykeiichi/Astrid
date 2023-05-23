@@ -49,10 +49,10 @@ public class ASTFunctionDefine : AST
 {
     public string label;
     public List<(string, Types)> parameters;
-    public Types returnType;
+    public Types? returnType;
     public List<AST> block;
 
-    public ASTFunctionDefine(string label, List<(string, Types)> parameters, Types returnType, List<AST> block)
+    public ASTFunctionDefine(string label, List<(string, Types)> parameters, Types? returnType, List<AST> block)
     {
         this.label = label;
         this.parameters = parameters;
@@ -119,6 +119,18 @@ public class ASTWhile : AST
     }
 }
 
+public class ASTMatch : AST
+{
+    public ASTExpression expr;
+    public Dictionary<ASTExpression, List<AST>> matches;
+
+    public ASTMatch(ASTExpression expr, Dictionary<ASTExpression, List<AST>> matches)
+    {
+        this.expr = expr;
+        this.matches = matches;
+    }
+}
+
 public enum AssignOp 
 {
     Assign,
@@ -126,7 +138,8 @@ public enum AssignOp
     Minus,
     Divide,
     Multiply,
-    Power
+    Power,
+    Modulo
 }
 
 public static class Parser
@@ -173,12 +186,15 @@ public static class Parser
                     var (newtokens, newast) = ParseVariableDefine(tokens.ToArray(), identifierLabel);
                     tokens = newtokens.ToList();
                     ast.Add(newast);   
-                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignDivide), typeof(TokenAssignMinus), typeof(TokenAssignMultiply), typeof(TokenAssignPlus), typeof(TokenAssignPower)}.Contains(token.GetType()))
+                } else if(new [] {typeof(TokenAssign), typeof(TokenAssignDivide), typeof(TokenAssignMinus), typeof(TokenAssignMultiply), typeof(TokenAssignPlus), typeof(TokenAssignPower), typeof(TokenAssignModulo)}.Contains(token.GetType()))
                 {
                     tokens = tokens.Skip(1).ToList();
                     var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, token);
                     tokens = newtokens.ToList();
                     ast.Add(newast);   
+                } else 
+                {
+                    Error.Throw("Unexpected token after identifier", token);
                 }
             } else if(token.GetType() == typeof(TokenKeyword))
             {
@@ -200,7 +216,19 @@ public static class Parser
                     var (newtokens, newast) = ParseWhile(tokens.ToArray());
                     tokens = newtokens.ToList();
                     ast.Add(newast);
+                } else if(token.value == "match")
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseMatch(tokens.ToArray());
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
+                } else 
+                {
+                    Error.Throw("Unimplemented keyword", token);
                 }
+            } else 
+            {
+                Error.Throw("Unexpected token", token);
             }
         }
 
@@ -262,6 +290,56 @@ public static class Parser
         return (tokens.ToArray(), new ASTWhile(expr, astblock));   
     }
 
+    public static (Token[], AST) ParseMatch(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+        AST ast = new();
+        
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        var token = tokens[0];
+
+        Dictionary<ASTExpression, List<AST>> matches = new();
+
+        bool matchesDone = false;
+
+        while(tokens.Count > 0 && !matchesDone)
+        {
+            token = tokens[0];
+            // Tokenizer.Print(token);
+
+            (newtokens, var matchexpr) = ParseExpression(tokens.ToArray());
+            tokens = newtokens.ToList();
+            token = tokens[0];
+
+            if(token.GetType() == typeof(TokenBlockStart))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+            } else 
+            {
+                Error.Throw("Expected block start after match expression", token);   
+            }
+
+            (newtokens, var block) = ParseBlock(tokens.ToArray());
+            tokens = newtokens.ToList();
+
+            token = tokens[0];
+
+            // tokens = tokens.Skip(1).ToList();
+
+            matches.Add(matchexpr, block);
+
+            if(token.GetType() == typeof(TokenBlockEnd))
+            {
+                return (tokens.ToArray(), new ASTMatch(expr, matches));
+            }
+        }
+
+        return (tokens.ToArray(), new ASTMatch(expr, matches));
+    }
+
     public static (Token[], AST) ParseFunctionDefine(Token[] tokens_, string label)
     {
         List<Token> tokens = tokens_.ToList();
@@ -284,6 +362,14 @@ public static class Parser
         while(tokens.Count > 0 || !parametersDone)
         {
             token = tokens[0];
+
+            if(token.GetType() == typeof(TokenParenEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+                parametersDone = true;
+                break;
+            }
 
             var parameterLabel = "";
             if(token.GetType() == typeof(TokenIdentifier))
@@ -336,11 +422,17 @@ public static class Parser
             }
         }
 
-        Types returnType = Types.Int;
+        Types? returnType = null;
         if(token.GetType() == typeof(TokenIdentifier))
         {   
+            if(token.value == "void")
+            {
+                returnType = null;
+            } else 
+            {
+                returnType = GetTypeFromToken(token);
+            }
             // Console.WriteLine("2");
-            returnType = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
         } else {
@@ -376,6 +468,14 @@ public static class Parser
         while(tokens.Count > 0 || !parametersDone)
         {
             var token = tokens[0];
+
+            if(token.GetType() == typeof(TokenParenEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+                parametersDone = true;
+                break;
+            }
 
             var parameterLabel = "";
             if(token.GetType() == typeof(TokenIdentifier))
@@ -481,7 +581,10 @@ public static class Parser
         } else if(op.GetType() == typeof(TokenAssignPower))
         {
             asop = AssignOp.Power;
-        } else 
+        } else if(op.GetType() == typeof(TokenAssignModulo))
+        {
+            asop = AssignOp.Power;
+        }  else 
         {
             Error.Throw("Invalid operator", op);
         }
@@ -513,7 +616,8 @@ public static class Parser
         {typeof(TokenMinus), (2, false)},
         {typeof(TokenDivide), (3, false)},
         {typeof(TokenMultiply), (3, false)},
-        {typeof(TokenPower), (4, false)},
+        {typeof(TokenModulo), (3, false)},
+        {typeof(TokenPower), (4, true)},
     };
 
     public static Dictionary<Type, (int, bool)> ExprOperatorsBoolean = new()
@@ -534,6 +638,8 @@ public static class Parser
         int leftParens = 0;
         int rightParens = 0;
 
+        // Console.WriteLine("a");
+
         while(tokens.Count > 0)
         {
             var token = tokens[0];
@@ -550,7 +656,16 @@ public static class Parser
 
             // Console.WriteLine("expr " + Tokenizer.GetTokenAsHuman(token));
 
-            if(new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(token.GetType()) || (new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(tokens[0].GetType()) && new [] {typeof(TokenParenEnd)}.Contains(token.GetType())) || (rightParens > leftParens))
+            // Tokenizer.Print(token);
+
+            if(
+                new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma), typeof(TokenColon)}.Contains(token.GetType()) || 
+                (
+                    new [] {typeof(TokenEOL), typeof(TokenBlockStart), typeof(TokenComma)}.Contains(tokens[0].GetType()) && 
+                    new [] {typeof(TokenParenEnd)}.Contains(token.GetType())
+                ) || 
+                (rightParens > leftParens)
+            )
             {
                 while(OperatorQueue.Count > 0)
                 {

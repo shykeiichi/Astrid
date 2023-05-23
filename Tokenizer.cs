@@ -1,7 +1,7 @@
 namespace Astrid;
 
 public static class Tokenizer {
-    public static List<string> Keywords = new() {"enum", "class", "if", "while", "return"};
+    public static List<string> Keywords = new() {"enum", "class", "if", "while", "return", "match"};
 
     public static Token[] TokenizeFromFile(string path) {
         return TokenizeFromMemory(File.ReadAllLines(path));
@@ -23,10 +23,12 @@ public static class Tokenizer {
         string[] boolValues = new string[] {"false", "true"};
 
         void HandleCurrentWord() {
+            if(isString) {
+                tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length - 1, charIdx + 1));
+            }
             if(currentWord != "") {
-                if(isString) {
-                    tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length - 1, charIdx + 1));
-                } else {
+                if(!isString)
+                {
                     int ivalue;
                     float fvalue;
                     string currentWordwithoutEndSuffix = currentWord.ToString();
@@ -61,7 +63,10 @@ public static class Tokenizer {
                         }
                     }
                 }
-            }
+            }// else if(currentWord == "" && isString)
+            // {
+            //     tokens.Add(new TokenString(currentWord, lineIdx, lineIdx, charIdx - currentWord.Length - 1, charIdx + 1));
+            // }
             currentWord = "";
         }
 
@@ -141,6 +146,13 @@ public static class Tokenizer {
                     case ':': {
                         HandleCurrentWord();
 
+
+                        if(line.Length <= charIdx + 1)
+                        {
+                            tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx, charIdx + 1));
+                            break;
+                        }
+
                         if(line[charIdx + 1] != ':')
                             tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
@@ -198,6 +210,16 @@ public static class Tokenizer {
 
                         if(line[charIdx + 1] != '=')
                             tokens.Add(new TokenPower(lineIdx, lineIdx, charIdx, charIdx + 1));
+                        else {
+                            tokens.Add(new TokenAssignPower(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
+                            skipNext = true;
+                        }
+                    } break;
+                    case '%': {
+                        HandleCurrentWord();
+
+                        if(line[charIdx + 1] != '=')
+                            tokens.Add(new TokenModulo(lineIdx, lineIdx, charIdx, charIdx + 1));
                         else {
                             tokens.Add(new TokenAssignPower(lineIdx, lineIdx, charIdx, charIdx + 1 + 1));
                             skipNext = true;

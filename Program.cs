@@ -6,6 +6,7 @@ class Program
 
     static void Main(string[] args)
     {
+        var now = DateTime.Now;
         foreach(var kvp in Parser.ExprOperatorsEquality)
         {
             Parser.ExprOperators.Add(kvp.Key, kvp.Value);
@@ -48,6 +49,39 @@ class Program
                 return null!;
             };
 
+        Func<List<Token>, object> printTokenFunc = 
+            (List<Token> parameters) => 
+            {
+                Console.WriteLine(Tokenizer.GetTokenAsHuman(parameters[0]));
+                return null!;
+            };
+
+        Func<List<Token>, object> inputFunc = 
+            (List<Token> parameters) => 
+            {
+                Console.Write(parameters[0].value);
+                string a = Console.ReadLine()!;
+                return new TokenString(a, 0, 0, 0, 0);
+            };
+
+        Func<List<Token>, object> strFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenString(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
+
+        Func<List<Token>, object> intFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenInt(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
+
+        Func<List<Token>, object> floatFunc = 
+            (List<Token> parameters) => 
+            {
+                return new TokenFloat(parameters[0].value, parameters[0].lineStart, parameters[0].lineEnd, parameters[0].charStart, parameters[0].charEnd);
+            };
+
         Interpreter.Run(parsed.Item2, new(), new() {
             {
                 "print",
@@ -56,10 +90,62 @@ class Program
                         ("message", Types.String)
                     },
                     printFunc,
+                    null
+                )
+            },
+            {
+                "printtoken",
+                (
+                    new() {
+                        ("message", Types.String)
+                    },
+                    printTokenFunc,
+                    null
+                )
+            },
+            {
+                "input",
+                (
+                    new() {
+                        ("message", Types.String)
+                    },
+                    inputFunc,
                     Types.String
+                )
+            },
+            {
+                "str",
+                (
+                    new() {
+                        ("from", Types.String)
+                    },
+                    strFunc,
+                    Types.String
+                )
+            },
+            {
+                "int",
+                (
+                    new() {
+                        ("from", Types.String)
+                    },
+                    intFunc,
+                    Types.Int
+                )
+            },
+            {
+                "float",
+                (
+                    new() {
+                        ("from", Types.String)
+                    },
+                    floatFunc,
+                    Types.Float
                 )
             }
         });
+
+        // Console.WriteLine($"Time elapsed: {DateTime.Now.Subtract(now).TotalSeconds}");
     }
 
     static void PrintAST(List<AST> a)
@@ -152,6 +238,32 @@ class Program
                     }
                 });
                 Console.WriteLine();
+            } else if(d.GetType() == typeof(ASTMatch))
+            {
+                var call = ((ASTMatch)d);
+                Console.WriteLine("Match: ");
+                Console.Write(" Expr: ");
+                call.expr.expression.ForEach(e => {
+                    if(e.GetType() != typeof(ASTFunctionCall))
+                        Console.Write(((dynamic)e).value + " ");
+                    else
+                        PrintFunctionCall((ASTFunctionCall)e);
+                });
+                Console.WriteLine("{");
+                call.matches.ToList().ForEach(e => {
+                    Console.WriteLine(e.Key.expression.Count);
+                    e.Key.expression.ForEach(e => {
+                        if(e.GetType() != typeof(ASTFunctionCall))
+                            Console.Write(((dynamic)e).value + " ");
+                        else
+                            PrintFunctionCall((ASTFunctionCall)e);
+                    });
+
+                    Console.WriteLine(": {");
+                    PrintAST(e.Value);
+                    Console.WriteLine("}");
+                });
+                Console.WriteLine("}");
             }
         }
     }
