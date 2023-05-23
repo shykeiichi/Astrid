@@ -119,6 +119,18 @@ public class ASTWhile : AST
     }
 }
 
+public class ASTMatch : AST
+{
+    public ASTExpression expr;
+    public Dictionary<ASTExpression, List<AST>> matches;
+
+    public ASTMatch(ASTExpression expr, Dictionary<ASTExpression, List<AST>> matches)
+    {
+        this.expr = expr;
+        this.matches = matches;
+    }
+}
+
 public enum AssignOp 
 {
     Assign,
@@ -180,6 +192,9 @@ public static class Parser
                     var (newtokens, newast) = ParseVariableReassign(tokens.ToArray(), identifierLabel, token);
                     tokens = newtokens.ToList();
                     ast.Add(newast);   
+                } else 
+                {
+                    Error.Throw("Unexpected token after identifier", token);
                 }
             } else if(token.GetType() == typeof(TokenKeyword))
             {
@@ -201,6 +216,15 @@ public static class Parser
                     var (newtokens, newast) = ParseWhile(tokens.ToArray());
                     tokens = newtokens.ToList();
                     ast.Add(newast);
+                } else if(token.value == "match")
+                {
+                    tokens = tokens.Skip(1).ToList();
+                    var (newtokens, newast) = ParseMatch(tokens.ToArray());
+                    tokens = newtokens.ToList();
+                    ast.Add(newast);
+                } else 
+                {
+                    Error.Throw("Unimplemented keyword", token);
                 }
             } else 
             {
@@ -264,6 +288,26 @@ public static class Parser
         tokens = newtokens.ToList();
 
         return (tokens.ToArray(), new ASTWhile(expr, astblock));   
+    }
+
+    public static (Token[], AST) ParseMatch(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+        AST ast = new();
+        
+        var (newtokens, expr) = ParseExpression(tokens.ToArray());
+        tokens = newtokens.ToList();
+
+        var token = tokens[0];
+
+        if(token.GetType() == typeof(TokenParenStart))
+        {
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+        } else 
+        {
+            Error.Throw("Expected left parenthesis '(' after double colon '::'", token);   
+        }        
     }
 
     public static (Token[], AST) ParseFunctionDefine(Token[] tokens_, string label)

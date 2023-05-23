@@ -1,7 +1,7 @@
 namespace Astrid;
 
 public static class Tokenizer {
-    public static List<string> Keywords = new() {"enum", "class", "if", "while", "return"};
+    public static List<string> Keywords = new() {"enum", "class", "if", "while", "return", "match"};
 
     public static Token[] TokenizeFromFile(string path) {
         return TokenizeFromMemory(File.ReadAllLines(path));
@@ -145,6 +145,13 @@ public static class Tokenizer {
                     } break;
                     case ':': {
                         HandleCurrentWord();
+
+
+                        if(line.Length <= charIdx + 1)
+                        {
+                            tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx, charIdx + 1));
+                            break;
+                        }
 
                         if(line[charIdx + 1] != ':')
                             tokens.Add(new TokenColon(lineIdx, lineIdx, charIdx, charIdx + 1));
