@@ -1,6 +1,6 @@
 val1: float = float(to: input(message: "val1: "));
 val2: float = float(to: input(message: "val2: "));
-op: int = int(to: input(message: "op (plus: 0, minus: 1, multiply: 2, divide: 3): "));
+op: int = int(to: input(message: "op (+: 0, -: 1, *: 2, /: 3): "));
 
 match op
 {
