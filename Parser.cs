@@ -12,7 +12,12 @@ public enum Types
 {
     String,
     Int,
-    Float
+    Float,
+    Bool,
+    ArrayString,
+    ArrayInt,
+    ArrayFloat,
+    ArrayBool
 }
 
 public class AST { }
@@ -235,14 +240,28 @@ public static class Parser
         return (tokens.ToArray(), ast);
     }
     
-    public static Types GetTypeFromToken(Token t)
+    public static Types GetTypeFromToken(Token t, bool array=false)
     {
-        switch(t.value)
+        if(!array)
         {
-            case "int": return Types.Int;
-            case "float": return Types.Float;
-            case "string": return Types.String;
-            default: Error.Throw($"Invalid type", t); return Types.Int;
+            switch(t.value)
+            {
+                case "int": return Types.Int;
+                case "float": return Types.Float;
+                case "string": return Types.String;
+                case "bool": return Types.Bool;
+                default: Error.Throw($"Invalid type", t); return Types.Int;
+            }
+        } else 
+        {
+            switch(t.value)
+            {
+                case "int": return Types.ArrayInt;
+                case "float": return Types.ArrayFloat;
+                case "string": return Types.ArrayString;
+                case "bool": return Types.ArrayBool;
+                default: Error.Throw($"Invalid type", t); return Types.Int;
+            }
         }
     }
 
@@ -539,6 +558,22 @@ public static class Parser
             type = GetTypeFromToken(token);
             tokens = tokens.Skip(1).ToList();
             token = tokens[0];
+        } else if(token.GetType() == typeof(TokenArrayStart))
+        {
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+            type = GetTypeFromToken(token, true);
+            tokens = tokens.Skip(1).ToList();
+            token = tokens[0];
+
+            if(token.GetType() == typeof(TokenArrayEnd))
+            {
+                tokens = tokens.Skip(1).ToList();
+                token = tokens[0];
+            } else
+            {
+                Error.Throw("Expected array end after array type definition", token);
+            }
         } else 
         {
             Error.Throw("Expected type", token);   
@@ -627,6 +662,28 @@ public static class Parser
 
     public static Dictionary<Type, (int, bool)> ExprOperators = new();
 
+    public static (Token[], Token) ParseArray(Token[] tokens_)
+    {
+        List<Token> tokens = tokens_.ToList();
+
+        Types type;
+        while(tokens.Count > 0)
+        {
+            var token = tokens[0];
+
+            if(token is TokenArrayEnd)
+            {
+                Token list;
+                if(type == null)
+                {
+                    list = new TokenArrayInt(0, 0, 0, 0);
+                }
+
+                return (tokens.ToList(), )
+            }
+        }
+    }
+
     public static (Token[], ASTExpression) ParseExpression(Token[] tokens_)
     {
         List<Token> tokens = tokens_.ToList();
@@ -638,7 +695,18 @@ public static class Parser
         int leftParens = 0;
         int rightParens = 0;
 
-        // Console.WriteLine("a");
+        List<Token> fixedTokens = new();
+
+        foreach(var token in tokens)
+        {
+            if(token is not TokenArrayStart)
+            {
+                fixedTokens.Add(token);
+            } else
+            {
+                var (newtokens, list) = ParseArray(tokens.ToArray());
+            }
+        }
 
         while(tokens.Count > 0)
         {

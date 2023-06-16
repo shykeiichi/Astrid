@@ -16,7 +16,7 @@ public static class Tokenizer {
 
         string currentWord = "";
         
-        int lineIdx;
+        int lineIdx; 
         int charIdx;
 
         bool isString = false;

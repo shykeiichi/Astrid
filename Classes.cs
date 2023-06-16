@@ -72,6 +72,34 @@ internal class TokenBoolean : Token
     }
 }
 
+internal class TokenArrayString : Token
+{
+    public TokenArrayString(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
+    }
+}
+
+internal class TokenArrayFloat : Token
+{
+    public TokenArrayFloat(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
+    }
+}
+
+internal class TokenArrayInt : Token
+{
+    public TokenArrayInt(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
+    }
+}
+
+internal class TokenArrayBoolean : Token
+{
+    public TokenArrayBoolean(string value, int lineStart, int lineEnd, int charStart, int charEnd) : base(value, lineStart, lineEnd, charStart, charEnd)
+    {
+    }
+}
+
 internal class TokenAssign : Token
 {
     public TokenAssign(int lineStart, int lineEnd, int charStart, int charEnd) : base(lineStart, lineEnd, charStart, charEnd)
