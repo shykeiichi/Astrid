@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct TokenProperties
 {
     pub line_start: i32,
@@ -14,6 +15,7 @@ impl TokenProperties
     }
 }
 
+#[derive(Debug)]
 pub enum Token
 {
     Identifier(String, TokenProperties),
@@ -24,40 +26,95 @@ pub enum Token
     Float(f32, TokenProperties),
     Boolean(bool, TokenProperties),
 
-    Assign(String, TokenProperties),
-    AssignMinus(String, TokenProperties),
-    AssignPlus(String, TokenProperties),
-    AssignDivide(String, TokenProperties),
-    AssignMultiply(String, TokenProperties),
-    AssignPower(String, TokenProperties),
-    AssignModulo(String, TokenProperties),
+    Assign(TokenProperties),
+    AssignMinus(TokenProperties),
+    AssignPlus(TokenProperties),
+    AssignDivide(TokenProperties),
+    AssignMultiply(TokenProperties),
+    AssignPower(TokenProperties),
+    AssignModulo(TokenProperties),
 
-    Comma(String, TokenProperties),
-    ArrayStart(String, TokenProperties),
-    ArrayEnd(String, TokenProperties),
-    ParenStart(String, TokenProperties),
-    ParenEnd(String, TokenProperties),
-    Colon(String, TokenProperties),
-    DoubleColon(String, TokenProperties),
-    BlockStart(String, TokenProperties),
-    BlockEnd(String, TokenProperties),
-    EOL(String, TokenProperties),
-    NamespaceSeparator(String, TokenProperties),
+    Comma(TokenProperties),
+    ArrayStart(TokenProperties),
+    ArrayEnd(TokenProperties),
+    ParenStart(TokenProperties),
+    ParenEnd(TokenProperties),
+    Colon(TokenProperties),
+    DoubleColon(TokenProperties),
+    BlockStart(TokenProperties),
+    BlockEnd(TokenProperties),
+    EOL(TokenProperties),
+    NamespaceSeparator(TokenProperties),
 
-    Plus(String, TokenProperties),
-    Minus(String, TokenProperties),
-    Multiply(String, TokenProperties),
-    Divide(String, TokenProperties),
-    Power(String, TokenProperties),
-    Modulo(String, TokenProperties),
+    Plus(TokenProperties),
+    Minus(TokenProperties),
+    Multiply(TokenProperties),
+    Divide(TokenProperties),
+    Power(TokenProperties),
+    Modulo(TokenProperties),
 
-    Or(String, TokenProperties),
-    And(String, TokenProperties),
-    Not(String, TokenProperties),
-    Equals(String, TokenProperties),
-    NotEquals(String, TokenProperties),
-    Greater(String, TokenProperties),
-    GreaterEquals(String, TokenProperties),
-    Lesser(String, TokenProperties),
-    LesserEquals(String, TokenProperties),
+    Or(TokenProperties),
+    And(TokenProperties),
+    Not(TokenProperties),
+    Equals(TokenProperties),
+    NotEquals(TokenProperties),
+    Greater(TokenProperties),
+    GreaterEquals(TokenProperties),
+    Lesser(TokenProperties),
+    LesserEquals(TokenProperties),
+}
+
+impl Token
+{
+    fn get_value(self) -> String
+    {
+        return match self
+        {
+            Token::Identifier(a, _) => a,
+            Token::Keyword(a, _) => a,
+
+            Token::String(a, _) => a,
+            Token::Int(a, _) => a.to_string(),
+            Token::Float(a, _) => a.to_string(),
+            Token::Boolean(a, _) => a.to_string(),
+
+            Token::Assign(_) => String::from("="),
+            Token::AssignMinus(_) => String::from("-="),
+            Token::AssignPlus(_) => String::from("+="),
+            Token::AssignDivide(_) => String::from("/="),
+            Token::AssignMultiply(_) => String::from("*="),
+            Token::AssignPower(_) => String::from("^="),
+            Token::AssignModulo(_) => String::from("%="),
+
+            Token::Comma(_) => String::from(","),
+            Token::ArrayStart(_) => String::from("["),
+            Token::ArrayEnd(_) => String::from("]"),
+            Token::ParenStart(_) => String::from("("),
+            Token::ParenEnd(_) => String::from(")"),
+            Token::Colon(_) => String::from(":"),
+            Token::DoubleColon(_) => String::from("::"),
+            Token::BlockStart(_) => String::from("{"),
+            Token::BlockEnd(_) => String::from("}"),
+            Token::EOL(_) => String::from(";"),
+            Token::NamespaceSeparator(_) => String::from("."),
+
+            Token::Minus(_) => String::from("-"),
+            Token::Plus(_) => String::from("+"),
+            Token::Divide(_) => String::from("/"),
+            Token::Multiply(_) => String::from("*"),
+            Token::Power(_) => String::from("^"),
+            Token::Modulo(_) => String::from("%"),
+
+            Token::Or(_) => String::from("||"),
+            Token::And(_) => String::from("&&"),
+            Token::Not(_) => String::from("!"),
+            Token::Equals(_) => String::from("=="),
+            Token::NotEquals(_) => String::from("!="),
+            Token::Greater(_) => String::from(">"),
+            Token::GreaterEquals(_) => String::from(">="),
+            Token::Lesser(_) => String::from("<"),
+            Token::LesserEquals(_) => String::from("<="),
+            
+        }
+    }
 }

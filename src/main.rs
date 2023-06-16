@@ -4,9 +4,9 @@ mod tokens;
 use tokenizer::tokenize_file;
 
 fn main() {
-    args().for_each(|f| {
-        println!("{}", f);
-    });
+    // args().for_each(|f| {
+    //     println!("{}", f);
+    // });
 
     if args().len() < 2
     {
@@ -24,5 +24,9 @@ fn main() {
 
     // input_file.iter().for_each(|f| {println!("{}", f)});
 
-    tokenize_file(input_file);
+    tokenize_file(input_file).iter().for_each(|f| {
+        dbg!(f);
+    });
+
+
 }

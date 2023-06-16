@@ -1,6 +1,6 @@
 use crate::tokens::{Token, TokenProperties};
 
-pub fn tokenize_file(input_file_vec: Vec<String>)
+pub fn tokenize_file(input_file_vec: Vec<String>) -> Vec<Token>
 {
     let input_file: Vec<String> = input_file_vec.iter().map(|f| String::from(f.split("//").nth(0).unwrap())).collect();
 
@@ -8,8 +8,8 @@ pub fn tokenize_file(input_file_vec: Vec<String>)
     let mut tokens: Vec<Token> = vec![];
     let mut current_word = String::new();
 
-    let mut line_idx = -1;
-    let mut char_idx = -1;
+    let mut line_idx: i32;
+    let mut char_idx: i32;
 
     fn handle_current_word(current_word: &str, line_idx: i32, char_idx: i32, is_string: bool, tokens: &mut Vec<Token>)
     {
@@ -101,11 +101,304 @@ pub fn tokenize_file(input_file_vec: Vec<String>)
             match c
             {
                 '=' => {
-                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens)
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
                     current_word = String::new();
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Assign(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::Equals(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
                 },
-                _ => {}
+                '"' => is_string = true,
+                ',' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::Comma(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                '[' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::ArrayStart(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                ']' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::ArrayEnd(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                '(' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::ParenStart(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                ')' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::ParenEnd(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                '{' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::BlockStart(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                '}' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::BlockEnd(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                ':' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Colon(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != ':'
+                    {
+                        tokens.push(Token::Colon(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::DoubleColon(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                ';' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+
+                    tokens.push(Token::EOL(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                },
+                '+' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Plus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Plus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignPlus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '-' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Minus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Minus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignMinus(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '*' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Multiply(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Multiply(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignMultiply(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '/' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Divide(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Divide(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignDivide(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '^' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Power(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Power(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignPower(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '%' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.len() as i32 <= char_idx + 1
+                    {
+                        tokens.push(Token::Modulo(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                        break
+                    }
+
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Modulo(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else 
+                    {
+                        tokens.push(Token::AssignModulo(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '.' => {
+                    if let Err(_) = current_word.parse::<f32>()
+                    {
+                        handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                        current_word = String::new();
+
+                        tokens.push(Token::NamespaceSeparator(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));                    
+                    } else 
+                    {
+                        if c != ' '  {
+                            current_word.push(c);
+                        } else {
+                            handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                            current_word = String::new();
+                        }
+                    } 
+                },
+                '|' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '|'
+                    {
+                        if c != ' '  {
+                            current_word.push(c);
+                        } else {
+                            handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                            current_word = String::new();
+                        }
+                    } else
+                    {
+                        tokens.push(Token::Or(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '&' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '&'
+                    {
+                        if c != ' '  {
+                            current_word.push(c);
+                        } else {
+                            handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                            current_word = String::new();
+                        }
+                    } else
+                    {
+                        tokens.push(Token::And(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '!' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Not(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else
+                    {
+                        tokens.push(Token::NotEquals(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '>' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Greater(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else
+                    {
+                        tokens.push(Token::GreaterEquals(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                '<' => {
+                    handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                    current_word = String::new();
+                    
+                    if line.chars().nth((char_idx + 1) as usize).unwrap() != '='
+                    {
+                        tokens.push(Token::Lesser(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 1)));
+                    } else
+                    {
+                        tokens.push(Token::LesserEquals(TokenProperties::new(line_idx, line_idx, char_idx, char_idx + 2)));
+                        skip_next = true;
+                    }
+                },
+                _ => 
+                {
+                    if c != ' '  {
+                        current_word.push(c);
+                    } else {
+                        handle_current_word(&current_word, line_idx, char_idx, is_string, &mut tokens);
+                        current_word = String::new();
+                    }
+                }
             }
         }
     }
+
+    tokens
 }
